@@ -1,0 +1,35 @@
+# build output
+dist/
+
+# generated types
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# environment variables
+.env
+.env.production
+
+# cloudflare
+.dev.vars
+.wrangler/
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+
+# 10xDevs CLI — private to course participants, do NOT publish
+.claude/skills/
+.claude/.10x-cli-manifest.json
+
+# Local agent settings (may contain personal allowlist)
+.claude/settings.local.json
