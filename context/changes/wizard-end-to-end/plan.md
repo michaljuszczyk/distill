@@ -721,34 +721,34 @@ None. No schema changes — F-01 already covers the data layer. Env adds one sec
 
 #### Automated
 
-- [x] 1.1 `npm install` succeeds without peer-warning errors that block CI
-- [x] 1.2 `npm run build` passes
-- [x] 1.3 `npm run lint` is clean
-- [x] 1.4 `astro sync` regenerates `.astro/env.d.ts` and `OPENROUTER_API_KEY` appears in the generated types
-- [x] 1.5 New schemas in `src/types.ts` type-check (build covers this)
-- [x] 1.6a `npm test` runs the empty Vitest suite and reports 0 failures (suite present, runner wired)
-- [x] 1.6b CI step `npm test` runs between lint and build
+- [x] 1.1 `npm install` succeeds without peer-warning errors that block CI — 8b7c81b
+- [x] 1.2 `npm run build` passes — 8b7c81b
+- [x] 1.3 `npm run lint` is clean — 8b7c81b
+- [x] 1.4 `astro sync` regenerates `.astro/env.d.ts` and `OPENROUTER_API_KEY` appears in the generated types — 8b7c81b
+- [x] 1.5 New schemas in `src/types.ts` type-check (build covers this) — 8b7c81b
+- [x] 1.6a `npm test` runs the empty Vitest suite and reports 0 failures (suite present, runner wired) — 8b7c81b
+- [x] 1.6b CI step `npm test` runs between lint and build — 8b7c81b
 
 #### Manual
 
-- [x] 1.6 Visiting `/decisions/new` while signed-out redirects to `/auth/signin`
-- [x] 1.7 Dashboard renders a "New decision" link to `/decisions/new`
-- [x] 1.8 Setting `OPENROUTER_API_KEY` in `.dev.vars` produces no runtime warning on `npm run dev`
+- [x] 1.6 Visiting `/decisions/new` while signed-out redirects to `/auth/signin` — 8b7c81b
+- [x] 1.7 Dashboard renders a "New decision" link to `/decisions/new` — 8b7c81b
+- [x] 1.8 Setting `OPENROUTER_API_KEY` in `.dev.vars` produces no runtime warning on `npm run dev` — 8b7c81b
 
 ### Phase 2: Wizard shell + step 1 (Describe)
 
 #### Automated
 
-- [ ] 2.1 `npm run build` passes
-- [ ] 2.2 `npm run lint` passes
-- [ ] 2.3 Reducer unit test covers `SET_DESCRIPTION`, `GO_TO`, `REQUEST_FAIL` FR-031 invariant, and `canAdvance` for "anti-bias"
+- [x] 2.1 `npm run build` passes
+- [x] 2.2 `npm run lint` passes
+- [x] 2.3 Reducer unit test covers `SET_DESCRIPTION`, `GO_TO`, `REQUEST_FAIL` FR-031 invariant, and `canAdvance` for "anti-bias"
 
 #### Manual
 
-- [ ] 2.4 Visiting `/decisions/new` while signed-in renders the wizard with "Step 1 of 6 — Describe"
-- [ ] 2.5 Typing a paragraph and clicking Continue advances to a placeholder step 2
-- [ ] 2.6 Empty description shows inline validation error and does not advance
-- [ ] 2.7 Clicking Back from step 2 returns to step 1 with the description preserved
+- [x] 2.4 Visiting `/decisions/new` while signed-in renders the wizard with "Step 1 of 6 — Describe"
+- [x] 2.5 Typing a paragraph and clicking Continue advances to a placeholder step 2
+- [x] 2.6 Empty description shows inline validation error and does not advance
+- [x] 2.7 Clicking Back from step 2 returns to step 1 with the description preserved
 - [ ] 2.8 ErrorBanner placeholder renders correctly when state has a synthetic error
 
 ### Phase 3: Socratic endpoint + steps 2a/2b
