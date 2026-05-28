@@ -270,30 +270,30 @@ This is the first migration. There is no existing `decisions` table or data to m
 
 #### Automated
 
-- [x] 1.1 Migration applies cleanly: `npx supabase db reset`
-- [x] 1.2 Table has 8 columns with expected types: `psql \d public.decisions`
-- [x] 1.3 RLS enabled: `pg_class.relrowsecurity = t`
-- [x] 1.4 Policies present: `decisions_select_own` (r) + `decisions_insert_own` (a) only
-- [x] 1.5 Anon has no grants: `information_schema.role_table_grants` returns 0 rows
+- [x] 1.1 Migration applies cleanly: `npx supabase db reset` — fc95528
+- [x] 1.2 Table has 8 columns with expected types: `psql \d public.decisions` — fc95528
+- [x] 1.3 RLS enabled: `pg_class.relrowsecurity = t` — fc95528
+- [x] 1.4 Policies present: `decisions_select_own` (r) + `decisions_insert_own` (a) only — fc95528
+- [x] 1.5 Anon has no grants: `information_schema.role_table_grants` returns 0 rows — fc95528
 
 #### Manual
 
-- [x] 1.6 Cross-user RLS smoke: user B sees 0 rows for user A's decision
-- [x] 1.7 UPDATE as owner is rejected by RLS
-- [x] 1.8 DELETE as owner is rejected by RLS
+- [x] 1.6 Cross-user RLS smoke: user B sees 0 rows for user A's decision — fc95528
+- [x] 1.7 UPDATE as owner is rejected by RLS — fc95528
+- [x] 1.8 DELETE as owner is rejected by RLS — fc95528
 
 ### Phase 2: Shared DTOs + zod schemas in `src/types.ts`
 
 #### Automated
 
-- [ ] 2.1 `npm install zod` exits 0; lockfile updated
-- [ ] 2.2 `npx astro sync` exits 0
-- [ ] 2.3 `npx astro check` reports 0 errors in `src/types.ts`
-- [ ] 2.4 `npm run lint` exits 0 with no new warnings
-- [ ] 2.5 `SUPABASE_URL=stub SUPABASE_KEY=stub npm run build` exits 0
-- [ ] 2.6 `src/types.ts` exists at expected path
+- [x] 2.1 `npm install zod` exits 0; lockfile updated
+- [x] 2.2 `npx astro sync` exits 0
+- [x] 2.3 `npx astro check` reports 0 errors in `src/types.ts`
+- [x] 2.4 `npm run lint` exits 0 with no new warnings
+- [x] 2.5 `SUPABASE_URL=stub SUPABASE_KEY=stub npm run build` exits 0
+- [x] 2.6 `src/types.ts` exists at expected path
 
 #### Manual
 
-- [ ] 2.7 Hover-check in editor: all exports have non-`any` types with expected fields
-- [ ] 2.8 REPL round-trip: `NewDecisionInputSchema.parse(validSample)` succeeds; invalid technique throws
+- [x] 2.7 Hover-check in editor: all exports have non-`any` types with expected fields
+- [x] 2.8 REPL round-trip: `NewDecisionInputSchema.parse(validSample)` succeeds; invalid technique throws
