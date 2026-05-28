@@ -286,14 +286,14 @@ This is the first migration. There is no existing `decisions` table or data to m
 
 #### Automated
 
-- [x] 2.1 `npm install zod` exits 0; lockfile updated
-- [x] 2.2 `npx astro sync` exits 0
-- [x] 2.3 `npx astro check` reports 0 errors in `src/types.ts`
-- [x] 2.4 `npm run lint` exits 0 with no new warnings
-- [x] 2.5 `SUPABASE_URL=stub SUPABASE_KEY=stub npm run build` exits 0
-- [x] 2.6 `src/types.ts` exists at expected path
+- [x] 2.1 `npm install zod` exits 0; lockfile updated — 482d70b
+- [x] 2.2 `npx astro sync` exits 0 — 482d70b
+- [x] 2.3 `npx astro check` reports 0 errors in `src/types.ts` — 482d70b
+- [x] 2.4 `npm run lint` exits 0 with no new warnings — 482d70b
+- [x] 2.5 `SUPABASE_URL=stub SUPABASE_KEY=stub npm run build` exits 0 — 482d70b
+- [x] 2.6 `src/types.ts` exists at expected path — 482d70b
 
 #### Manual
 
-- [x] 2.7 Hover-check in editor: all exports have non-`any` types with expected fields
-- [x] 2.8 REPL round-trip: `NewDecisionInputSchema.parse(validSample)` succeeds; invalid technique throws
+- [x] 2.7 Hover-check in editor: all exports have non-`any` types with expected fields — 482d70b
+- [x] 2.8 REPL round-trip: `NewDecisionInputSchema.parse(validSample)` succeeds; invalid technique throws — 482d70b
