@@ -29,7 +29,7 @@ People making nontrivial decisions arrive mid-process with criteria blurred: par
 
 | ID    | Change ID              | Outcome (user can …)                                                                                  | Prerequisites    | PRD refs                                                                                  | Status   |
 | ----- | ---------------------- | ----------------------------------------------------------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------- | -------- |
-| F-01  | data-foundation        | (foundation) decisions schema + RLS + shared DTOs landed; per-user isolation enforced at data layer   | —                | FR-032                                                                                    | ready    |
+| F-01  | data-foundation        | (foundation) decisions schema + RLS + shared DTOs landed; per-user isolation enforced at data layer   | —                | FR-032                                                                                    | done     |
 | S-02  | wizard-end-to-end      | complete the 6-step wizard, see the structured artifact, copy/download it, and have it auto-saved    | F-01             | US-01, US-03, FR-020, FR-021, FR-022, FR-023, FR-024, FR-025, FR-026, FR-027, FR-028, FR-029, FR-030, FR-031 | proposed |
 | S-03  | decisions-list-view    | see a list of saved decisions with one-line previews and open any to view the read-only artifact      | F-01             | US-04, FR-010, FR-011, FR-013                                                             | proposed |
 | S-01  | magic-link-auth        | sign in via magic link instead of the existing email+password (capability upgrade, not a gate)        | —                | US-02, FR-001, FR-002, FR-003                                                             | ready    |
@@ -67,7 +67,7 @@ What's already in place in the codebase as of `2026-05-28` (auto-researched + us
 - **Blockers:** —
 - **Unknowns:** —
 - **Risk:** First piece on the critical path to the north star. Schema shape is load-bearing — the artifact's five sections (needs / criteria / options / risks / open questions) must be representable without S-02 having to migrate it later. Get the column shape right once.
-- **Status:** ready
+- **Status:** done
 
 ## Slices
 
@@ -141,4 +141,4 @@ _PRD `## Open Questions` was empty at draft time, and the lean interview surface
 
 ## Done
 
-_Empty on first generation. `/10x-archive` will append entries here when changes archive._
+- **F-01: (foundation) `decisions` table landed in Supabase with RLS policies that scope reads/writes to the owning user; shared DTO types (decision, artifact section schema) exported from `src/types.ts`.** — Archived 2026-05-28 → `context/archive/2026-05-28-data-foundation/`. Lesson: —.
