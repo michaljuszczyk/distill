@@ -12,6 +12,12 @@ export default defineConfig({
   integrations: [react(), sitemap()],
   vite: {
     plugins: [tailwindcss()],
+    ssr: {
+      noExternal: ["ai", "@ai-sdk/react", "@openrouter/ai-sdk-provider", "react-markdown"],
+    },
+    optimizeDeps: {
+      include: ["ai", "@ai-sdk/react", "@openrouter/ai-sdk-provider", "react-markdown"],
+    },
   },
   adapter: cloudflare(),
   env: {

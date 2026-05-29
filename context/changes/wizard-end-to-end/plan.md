@@ -739,33 +739,33 @@ None. No schema changes — F-01 already covers the data layer. Env adds one sec
 
 #### Automated
 
-- [x] 2.1 `npm run build` passes
-- [x] 2.2 `npm run lint` passes
-- [x] 2.3 Reducer unit test covers `SET_DESCRIPTION`, `GO_TO`, `REQUEST_FAIL` FR-031 invariant, and `canAdvance` for "anti-bias"
+- [x] 2.1 `npm run build` passes — 019d4b2
+- [x] 2.2 `npm run lint` passes — 019d4b2
+- [x] 2.3 Reducer unit test covers `SET_DESCRIPTION`, `GO_TO`, `REQUEST_FAIL` FR-031 invariant, and `canAdvance` for "anti-bias" — 019d4b2
 
 #### Manual
 
-- [x] 2.4 Visiting `/decisions/new` while signed-in renders the wizard with "Step 1 of 6 — Describe"
-- [x] 2.5 Typing a paragraph and clicking Continue advances to a placeholder step 2
-- [x] 2.6 Empty description shows inline validation error and does not advance
-- [x] 2.7 Clicking Back from step 2 returns to step 1 with the description preserved
+- [x] 2.4 Visiting `/decisions/new` while signed-in renders the wizard with "Step 1 of 6 — Describe" — 019d4b2
+- [x] 2.5 Typing a paragraph and clicking Continue advances to a placeholder step 2 — 019d4b2
+- [x] 2.6 Empty description shows inline validation error and does not advance — 019d4b2
+- [x] 2.7 Clicking Back from step 2 returns to step 1 with the description preserved — 019d4b2
 - [ ] 2.8 ErrorBanner placeholder renders correctly when state has a synthetic error
 
 ### Phase 3: Socratic endpoint + steps 2a/2b
 
 #### Automated
 
-- [ ] 3.1 Endpoint integration test: 200 streaming body for valid request, 401 without session cookie, 400 on malformed JSON, 422 with `priorAnswers.round2`
+- [x] 3.1 Endpoint integration test: 200 streaming body for valid request, 401 without session cookie, 400 on malformed JSON, 422 with `priorAnswers.round2`
 - [ ] 3.2 Schema parse failure on LLM output → 500 with `error.code = "schema_invalid"`
-- [ ] 3.3 `npm run lint` + `npm run build` pass
+- [x] 3.3 `npm run lint` + `npm run build` pass
 
 #### Manual
 
-- [ ] 3.4 Step 2 (round 1) streams questions with visible token reveal
-- [ ] 3.5 Skeleton (4 rows) renders immediately on entry to step 2
-- [ ] 3.6 Answering all questions and clicking Continue advances to round 2 iff `needsFollowUp` true, else step 3
-- [ ] 3.7 Force `needsFollowUp = false` (via prompt tweak) and confirm direct jump to step 3
-- [ ] 3.8 Round-2 cap: manual POST with `priorAnswers.round2` → 422
+- [x] 3.4 Step 2 (round 1) streams questions with visible token reveal
+- [x] 3.5 Skeleton (4 rows) renders immediately on entry to step 2
+- [x] 3.6 Answering all questions and clicking Continue advances to round 2 iff `needsFollowUp` true, else step 3
+- [x] 3.7 Force `needsFollowUp = false` (via prompt tweak) and confirm direct jump to step 3
+- [x] 3.8 Round-2 cap: manual POST with `priorAnswers.round2` → 422
 - [ ] 3.9 Kill the network mid-stream → ErrorBanner with Retry; prior data preserved
 - [ ] 3.10 Click Retry → fresh stream, eventual success
 

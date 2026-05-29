@@ -39,3 +39,20 @@ export function SkeletonBlock({ heading }: BlockProps) {
     </div>
   );
 }
+
+interface SocraticSkeletonProps {
+  approxN?: number;
+}
+
+export function SocraticSkeleton({ approxN = 4 }: SocraticSkeletonProps) {
+  return (
+    <div className="space-y-4">
+      {Array.from({ length: approxN }).map((_, i) => (
+        <div key={i} className="space-y-2 rounded-lg border border-white/10 bg-white/5 p-3">
+          <SkeletonRow width="70%" />
+          <SkeletonRow width="100%" className="h-12" />
+        </div>
+      ))}
+    </div>
+  );
+}

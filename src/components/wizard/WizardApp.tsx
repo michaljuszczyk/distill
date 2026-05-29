@@ -3,6 +3,7 @@ import { ErrorBanner } from "./ErrorBanner";
 import { StepHeader } from "./StepHeader";
 import { initialState, reducer } from "./reducer";
 import { DescribeStep } from "./steps/DescribeStep";
+import { SocraticStep } from "./steps/SocraticStep";
 import { WizardCtx } from "./context";
 import type { WizardStep } from "./types";
 
@@ -22,6 +23,9 @@ function StepBody({ step }: StepBodyProps) {
   switch (step) {
     case "describe":
       return <DescribeStep />;
+    case "socratic-1":
+    case "socratic-2":
+      return <SocraticStep />;
     default:
       return <Placeholder step={step} />;
   }
