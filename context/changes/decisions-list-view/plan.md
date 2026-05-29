@@ -208,32 +208,32 @@ None. No schema changes — this slice is read-only over the existing `decisions
 
 #### Automated
 
-- [x] 1.1 Type checking passes
-- [x] 1.2 Linting passes
-- [x] 1.3 Existing wizard tests pass
-- [x] 1.4 Build succeeds
+- [x] 1.1 Type checking passes — ff0d1ba
+- [x] 1.2 Linting passes — ff0d1ba
+- [x] 1.3 Existing wizard tests pass — ff0d1ba
+- [x] 1.4 Build succeeds — ff0d1ba
 
 #### Manual
 
-- [x] 1.5 Wizard artifact renders identically to before
-- [x] 1.6 Copy button still copies Markdown with transient "Copied" state
-- [x] 1.7 Download button still downloads a correctly named `.md` file
-- [x] 1.8 Clipboard-blocked path still shows the export error message
+- [x] 1.5 Wizard artifact renders identically to before — ff0d1ba
+- [x] 1.6 Copy button still copies Markdown with transient "Copied" state — ff0d1ba
+- [x] 1.7 Download button still downloads a correctly named `.md` file — ff0d1ba
+- [x] 1.8 Clipboard-blocked path still shows the export error message — ff0d1ba
 
 ### Phase 2: Decisions list at /dashboard
 
 #### Automated
 
-- [ ] 2.1 Type checking passes
-- [ ] 2.2 Linting passes
-- [ ] 2.3 Build succeeds
+- [x] 2.1 Type checking passes
+- [x] 2.2 Linting passes
+- [x] 2.3 Build succeeds
 
 #### Manual
 
-- [ ] 2.4 List shows decisions newest-first with title, summary, date
-- [ ] 2.5 Each row navigates to its /decisions/[id]
-- [ ] 2.6 Empty state + "Start your first decision" CTA appear and CTA opens /decisions/new
-- [ ] 2.7 Unauthenticated /dashboard redirects to /auth/signin
+- [x] 2.4 List shows decisions newest-first with title, summary, date
+- [x] 2.5 Each row navigates to its /decisions/[id]
+- [x] 2.6 Empty state + "Start your first decision" CTA appear and CTA opens /decisions/new
+- [x] 2.7 Unauthenticated /dashboard redirects to /auth/signin
 
 ### Phase 3: Read-only artifact detail at /decisions/[id]
 

@@ -1,6 +1,6 @@
 import type { NewDecisionInput } from "@/types";
 
-function firstNonEmptyLine(input: string): string {
+export function firstNonEmptyLine(input: string): string {
   const lines = input.split("\n");
   for (const line of lines) {
     const trimmed = line.trim();
