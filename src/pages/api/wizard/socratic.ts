@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { streamObject } from "ai";
 import { SocraticRequestSchema, SocraticResponseSchema } from "@/types";
 import { OpenRouterUnconfiguredError, getModel } from "@/lib/openrouter";
+import { NonRetryableError, streamWithRetry } from "@/lib/llm-retry";
 import { socraticSystem, socraticUser } from "@/lib/prompts/socratic";
 
 export const prerender = false;
@@ -33,25 +34,30 @@ export const POST: APIRoute = async (context) => {
   }
 
   try {
-    const model = getModel();
-    // eslint-disable-next-line @typescript-eslint/no-deprecated -- streamObject is the supported zod-schema streaming path; the deprecation favors streamText for chat-shaped output which doesn't apply here.
-    const result = streamObject({
-      model,
-      schema: SocraticResponseSchema,
-      system: socraticSystem(),
-      prompt: socraticUser({
-        description: parsed.data.description,
-        priorAnswers: parsed.data.priorAnswers,
-      }),
-      maxOutputTokens: 800,
-      onError({ error }) {
-        console.error("[socratic] stream error", error);
-      },
+    const baseModel = getModel();
+    return await streamWithRetry((attempt) => {
+      const model = attempt.fallback ? getModel({ allowFallbacks: true }) : baseModel;
+      // eslint-disable-next-line @typescript-eslint/no-deprecated -- streamObject is the supported zod-schema streaming path; the deprecation favors streamText for chat-shaped output which doesn't apply here.
+      return streamObject({
+        model,
+        schema: SocraticResponseSchema,
+        system: socraticSystem(),
+        prompt: socraticUser({
+          description: parsed.data.description,
+          priorAnswers: parsed.data.priorAnswers,
+        }),
+        maxOutputTokens: 800,
+        onError({ error }) {
+          console.error("[socratic] stream error", error);
+        },
+      });
     });
-    return result.toTextStreamResponse();
   } catch (err) {
     if (err instanceof OpenRouterUnconfiguredError) {
       return json({ error: "openrouter_unconfigured", code: "config" }, 500);
+    }
+    if (err instanceof NonRetryableError) {
+      return json({ error: "llm_unavailable", code: "llm", status: err.status }, 500);
     }
     return json({ error: "llm_unavailable", code: "llm" }, 500);
   }

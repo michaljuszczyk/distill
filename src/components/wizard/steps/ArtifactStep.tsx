@@ -73,6 +73,7 @@ export function ArtifactStep() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>(savedDecisionId ? "saved" : "idle");
   const [saveError, setSaveError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const submitted = useRef(false);
   const savedOnce = useRef(!!savedDecisionId);
   const stateRef = useRef(state);
@@ -208,11 +209,12 @@ export function ArtifactStep() {
     try {
       await navigator.clipboard.writeText(md);
       setCopied(true);
+      setExportError(null);
       setTimeout(() => {
         setCopied(false);
       }, 1500);
-    } catch (err) {
-      console.error("[artifact] copy failed", err);
+    } catch {
+      setExportError("Couldn't copy — your browser blocked clipboard access.");
     }
   }
 
@@ -224,17 +226,22 @@ export function ArtifactStep() {
       artifact: stored,
       anti_bias_technique: state.data.antiBiasTechnique,
     };
-    const md = artifactToMarkdown(input);
-    const filename = artifactToFilename(input);
-    const blob = new Blob([md], { type: "text/markdown" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    try {
+      const md = artifactToMarkdown(input);
+      const filename = artifactToFilename(input);
+      const blob = new Blob([md], { type: "text/markdown" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setExportError(null);
+    } catch {
+      setExportError("Couldn't download — your browser blocked the file.");
+    }
   }
 
   const streamErrorVisible = !!error && !state.error;
@@ -304,6 +311,12 @@ export function ArtifactStep() {
             </Button>
           </div>
         </div>
+      ) : null}
+
+      {exportError ? (
+        <p role="status" aria-live="polite" className="text-xs text-rose-300">
+          {exportError}
+        </p>
       ) : null}
 
       {saveStatus === "failed" ? (

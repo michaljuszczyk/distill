@@ -47,7 +47,7 @@ export const SocraticRequestSchema = z.object({
 export type SocraticRequest = z.infer<typeof SocraticRequestSchema>;
 
 export const SocraticResponseSchema = z.object({
-  questions: z.string().min(1).array().min(3).max(4),
+  questions: z.string().min(1).array().min(3).max(6),
   needsFollowUp: z.boolean(),
 });
 export type SocraticResponse = z.infer<typeof SocraticResponseSchema>;

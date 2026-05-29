@@ -63,6 +63,7 @@ export async function withRetry<T>(fn: (attempt: RetryAttempt) => Promise<T>, op
       return await fn(attempt);
     } catch (err) {
       lastErr = err;
+      if (err instanceof NonRetryableError) throw err;
       const { status, retryAfterMs } = extractStatus(err);
 
       if (status !== undefined && NON_RETRYABLE_STATUS.has(status)) {
@@ -81,4 +82,46 @@ export async function withRetry<T>(fn: (attempt: RetryAttempt) => Promise<T>, op
   }
 
   throw lastErr;
+}
+
+interface StreamLike {
+  textStream: ReadableStream<string>;
+}
+
+export async function streamWithRetry(
+  makeStream: (attempt: RetryAttempt) => StreamLike,
+  opts: RetryOpts = {},
+): Promise<Response> {
+  return withRetry(async (attempt) => {
+    const result = makeStream(attempt);
+    const reader = result.textStream.getReader();
+    const first = await reader.read();
+
+    const encoder = new TextEncoder();
+    const body = new ReadableStream<Uint8Array>({
+      async start(controller) {
+        try {
+          if (first.done) {
+            controller.close();
+            return;
+          }
+          controller.enqueue(encoder.encode(first.value));
+          for (;;) {
+            const { done, value } = await reader.read();
+            if (done) break;
+            controller.enqueue(encoder.encode(value));
+          }
+          controller.close();
+        } catch (err) {
+          controller.error(err);
+        } finally {
+          reader.releaseLock();
+        }
+      },
+    });
+
+    return new Response(body, {
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }, opts);
 }

@@ -138,6 +138,7 @@ export function AntiBiasStep() {
   function pick(t: AntiBiasTechnique) {
     if (isLoading) return;
     if (!state.data.socratic1 || !state.data.alternatives) return;
+    stop();
     dispatch({ type: "PICK_TECHNIQUE", technique: t });
     lastSubmittedTechnique.current = t;
     dispatch({ type: "REQUEST_START" });
@@ -152,6 +153,8 @@ export function AntiBiasStep() {
 
   function retry() {
     if (!technique || !state.data.socratic1 || !state.data.alternatives) return;
+    stop();
+    lastSubmittedTechnique.current = technique;
     dispatch({ type: "REQUEST_START" });
     const payload = {
       description: state.data.description,

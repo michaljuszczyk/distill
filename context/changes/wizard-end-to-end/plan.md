@@ -225,7 +225,11 @@ Stand up the single Astro page, the React island, the reducer, the chrome (numbe
 
 **Intent**: Layout + signed-in guard + island mount. Mirrors `src/pages/auth/signin.astro:16` pattern.
 
-**Contract**: imports `Layout`, redirects to `/auth/signin` if `Astro.locals.user` null (redundant w/ middleware but explicit), renders `<WizardApp client:load />`. No props.
+**Contract**: imports `Layout`, renders `<WizardApp client:only="react" />`. No props.
+
+**Deviation accepted at impl-review (2026-05-29)**:
+- Directive is `client:only="react"`, not `client:load` — SSR build of `WizardApp` failed (hooks reach into browser-only APIs at render). `client:only` is the correct directive for islands that can't SSR.
+- The explicit `Astro.locals.user` inline guard is omitted. Middleware (`PROTECTED_ROUTES` includes `/decisions`) already redirects unauth users at the network boundary, so the inline check would be redundant. Trade-off: a future change that removes `/decisions` from `PROTECTED_ROUTES` would silently expose this page.
 
 #### 2. Wizard state types
 
@@ -512,7 +516,9 @@ Two endpoints: `/api/wizard/artifact` streams the artifact + summary via `stream
 
 **File**: `src/pages/api/wizard/artifact.ts` (new)
 
-**Intent**: POST. Validates `ArtifactRequestSchema`. Inline auth. Runs `streamObject({ model, schema: ArtifactResponseSchema, system, prompt, headers: { "anthropic-beta": "fine-grained-tool-streaming-2025-05-14" } })` and returns `result.toTextStreamResponse()`. No `onFinish` INSERT; no data parts. Optional fallback: on `schema_invalid` after retry exhaustion, re-attempt once with `generateObject` against a model handle constructed with `plugins: [{ id: "response-healing" }]` and return the materialized object as a single chunk.
+**Intent**: POST. Validates `ArtifactRequestSchema`. Inline auth. Runs `streamObject({ model, schema: ArtifactResponseSchema, system, prompt })` and returns the streaming Response.
+
+**De-scoped at impl-review (2026-05-29)**: the Anthropic-only `anthropic-beta: fine-grained-tool-streaming-2025-05-14` header was dropped — the shipped model is DeepSeek (non-Anthropic), so the header is vestigial. The optional `generateObject` + `response-healing` plugin fallback on `schema_invalid` was also dropped — `response-healing` plugin compatibility with OpenRouter+DeepSeek is unverified and Phase 5.1's healing-test criterion was checked but never implemented. If the model swap to Anthropic later, restore both.
 
 **Contract**:
 - `export const prerender = false;`
@@ -756,7 +762,7 @@ None. No schema changes — F-01 already covers the data layer. Env adds one sec
 #### Automated
 
 - [x] 3.1 Endpoint integration test: 200 streaming body for valid request, 401 without session cookie, 400 on malformed JSON, 422 with `priorAnswers.round2` — 6130c75
-- [ ] 3.2 Schema parse failure on LLM output → 500 with `error.code = "schema_invalid"`
+- [~] 3.2 Schema parse failure on LLM output → 500 with `error.code = "schema_invalid"` — DE-SCOPED at impl-review 2026-05-29; subsumed by Phase 5.1a healing-fallback de-scope (no healing path ships)
 - [x] 3.3 `npm run lint` + `npm run build` pass — 6130c75
 
 #### Manual
@@ -793,7 +799,7 @@ None. No schema changes — F-01 already covers the data layer. Env adds one sec
 
 #### Automated
 
-- [x] 5.1 `/api/wizard/artifact`: 200 streaming body for valid request; 400 invalid body; 401 no session; 500 on `schema_invalid` after `generateObject` healing fallback fails — 5bd228e
+- [x] 5.1 `/api/wizard/artifact`: 200 streaming body for valid request; 400 invalid body; 401 no session; 500 on stream error — 5bd228e (healing-fallback path de-scoped at impl-review 2026-05-29; see Phase 5.1a note)
 - [x] 5.2 `/api/decisions` save: 201 `{ id }` for valid payload; 400 invalid body; 401 no session; 500 on INSERT failure — 5bd228e
 - [x] 5.3 `artifactToMarkdown` snapshot test — 5bd228e
 - [x] 5.4 `artifactToFilename` test — 5bd228e
