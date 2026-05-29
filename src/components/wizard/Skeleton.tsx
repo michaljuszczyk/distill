@@ -79,6 +79,24 @@ export function AlternativesSkeleton() {
   );
 }
 
+const ARTIFACT_HEADINGS = ["Needs", "Criteria", "Options", "Risks", "Open questions"];
+
+export function ArtifactSkeleton() {
+  return (
+    <div className="space-y-5">
+      <SkeletonRow width="65%" className="h-6" />
+      {ARTIFACT_HEADINGS.map((heading) => (
+        <div key={heading} className="space-y-2">
+          <h2 className="text-sm font-semibold tracking-wider text-white/60 uppercase">{heading}</h2>
+          <SkeletonRow width="92%" className="h-3" />
+          <SkeletonRow width="84%" className="h-3" />
+          <SkeletonRow width="78%" className="h-3" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AntiBiasSkeleton() {
   return (
     <div className="space-y-4 rounded-xl border border-white/10 bg-white/5 p-5">

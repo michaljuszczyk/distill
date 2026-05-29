@@ -6,6 +6,7 @@ import { DescribeStep } from "./steps/DescribeStep";
 import { SocraticStep } from "./steps/SocraticStep";
 import { AlternativesStep } from "./steps/AlternativesStep";
 import { AntiBiasStep } from "./steps/AntiBiasStep";
+import { ArtifactStep } from "./steps/ArtifactStep";
 import { WizardCtx } from "./context";
 import type { WizardStep } from "./types";
 
@@ -32,6 +33,8 @@ function StepBody({ step }: StepBodyProps) {
       return <AlternativesStep />;
     case "anti-bias":
       return <AntiBiasStep />;
+    case "artifact":
+      return <ArtifactStep />;
     default:
       return <Placeholder step={step} />;
   }

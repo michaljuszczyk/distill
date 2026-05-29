@@ -1,0 +1,320 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Check, Copy, Download } from "lucide-react";
+import { experimental_useObject as useObject } from "@ai-sdk/react";
+import { Button } from "@/components/ui/button";
+import { ErrorBanner } from "../ErrorBanner";
+import { ArtifactSkeleton } from "../Skeleton";
+import { useWizard } from "../context";
+import { artifactToFilename, artifactToMarkdown } from "@/lib/wizard/exporter";
+import {
+  ArtifactResponseSchema,
+  type ArtifactResponse,
+  type Artifact,
+  type NewDecisionInput,
+  type QAPair,
+  type SocraticPayload,
+} from "@/types";
+import type { Alternative as WizardAlternative, SocraticRound, WizardState } from "../types";
+
+function toSocraticPayload(r1: SocraticRound, r2?: SocraticRound): SocraticPayload {
+  const pairsFor = (r: SocraticRound): QAPair[] =>
+    r.questions.map((question, i) => ({ question, answer: r.answers[i] ?? "" }));
+  return r2 ? { round1: pairsFor(r1), round2: pairsFor(r2) } : { round1: pairsFor(r1) };
+}
+
+function alternativesForPayload(alts: WizardAlternative[]) {
+  return alts.map((a) => ({ title: a.title, pros: a.pros, cons: a.cons }));
+}
+
+function buildSavePayload(state: WizardState, artifact: Artifact, summary: string): NewDecisionInput | null {
+  if (!state.data.antiBiasTechnique) return null;
+  return {
+    description: state.data.description,
+    summary,
+    artifact,
+    anti_bias_technique: state.data.antiBiasTechnique,
+  };
+}
+
+interface SectionProps {
+  heading: string;
+  items?: (string | undefined)[];
+}
+
+function ArtifactSection({ heading, items }: SectionProps) {
+  const visible = items?.filter((s): s is string => typeof s === "string" && s.trim().length > 0) ?? [];
+  return (
+    <div className="space-y-2">
+      <h2 className="text-sm font-semibold tracking-wider text-white/60 uppercase">{heading}</h2>
+      {visible.length === 0 ? (
+        <p className="text-xs text-white/40 italic">…</p>
+      ) : (
+        <ul className="space-y-1.5 text-sm text-white/85">
+          {visible.map((item, i) => (
+            <li key={i} className="flex gap-2 leading-snug">
+              <span aria-hidden className="mt-1.5 size-1 shrink-0 rounded-full bg-white/40" />
+              <span>{item}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+type SaveStatus = "idle" | "saving" | "saved" | "failed";
+
+export function ArtifactStep() {
+  const { state, dispatch } = useWizard();
+  const stored = state.data.artifact;
+  const storedSummary = state.data.summary;
+  const savedDecisionId = state.data.savedDecisionId;
+
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>(savedDecisionId ? "saved" : "idle");
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+  const submitted = useRef(false);
+  const savedOnce = useRef(!!savedDecisionId);
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  });
+
+  const save = useCallback(
+    async (payload: NewDecisionInput) => {
+      setSaveStatus("saving");
+      setSaveError(null);
+      try {
+        const res = await fetch("/api/decisions", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (res.status !== 201) {
+          const body = (await res.json().catch(() => ({}))) as { error?: string };
+          setSaveStatus("failed");
+          setSaveError(body.error ?? `Save failed (${res.status})`);
+          return;
+        }
+        const body = (await res.json()) as { id: string };
+        dispatch({ type: "SAVED", decisionId: body.id });
+        setSaveStatus("saved");
+      } catch (err) {
+        setSaveStatus("failed");
+        setSaveError(err instanceof Error ? err.message : "Save failed");
+      }
+    },
+    [dispatch],
+  );
+
+  const { object, submit, isLoading, error, stop } = useObject({
+    api: "/api/wizard/artifact",
+    schema: ArtifactResponseSchema,
+    onFinish: ({ object: final, error: schemaError }) => {
+      if (schemaError) {
+        dispatch({ type: "REQUEST_FAIL", error: { kind: "llm", message: schemaError.message } });
+        return;
+      }
+      if (!final) return;
+      const { summary, ...artifact } = final;
+      dispatch({ type: "ARTIFACT_LOADED", artifact, summary });
+      if (savedOnce.current) return;
+      const payload = buildSavePayload(stateRef.current, artifact, summary);
+      if (!payload) return;
+      savedOnce.current = true;
+      void save(payload);
+    },
+    onError: (err) => {
+      dispatch({ type: "REQUEST_FAIL", error: { kind: "network", message: err.message } });
+    },
+  });
+
+  useEffect(() => {
+    if (stored || submitted.current) return;
+    if (
+      !state.data.socratic1 ||
+      !state.data.alternatives ||
+      !state.data.antiBiasTechnique ||
+      !state.data.antiBiasOutput
+    )
+      return;
+    submitted.current = true;
+    const payload = {
+      description: state.data.description,
+      socratic: toSocraticPayload(state.data.socratic1, state.data.socratic2),
+      alternatives: alternativesForPayload(state.data.alternatives),
+      technique: state.data.antiBiasTechnique,
+      antiBiasMarkdown: state.data.antiBiasOutput,
+    };
+    dispatch({ type: "REQUEST_START" });
+    submit(payload);
+  }, [
+    stored,
+    state.data.description,
+    state.data.socratic1,
+    state.data.socratic2,
+    state.data.alternatives,
+    state.data.antiBiasTechnique,
+    state.data.antiBiasOutput,
+    submit,
+    dispatch,
+  ]);
+
+  const partial = object as Partial<ArtifactResponse> | undefined;
+  const displayArtifact: Partial<Artifact> = stored ?? {
+    needs: partial?.needs?.filter((v): v is string => typeof v === "string"),
+    criteria: partial?.criteria?.filter((v): v is string => typeof v === "string"),
+    options: partial?.options?.filter((v): v is string => typeof v === "string"),
+    risks: partial?.risks?.filter((v): v is string => typeof v === "string"),
+    open_questions: partial?.open_questions?.filter((v): v is string => typeof v === "string"),
+  };
+  const displaySummary = storedSummary ?? (typeof partial?.summary === "string" ? partial.summary : "");
+  const showSkeleton = !stored && !partial;
+
+  function retrySave() {
+    if (!stored || !storedSummary) return;
+    const payload = buildSavePayload(state, stored, storedSummary);
+    if (!payload) return;
+    void save(payload);
+  }
+
+  function retryStream() {
+    if (
+      !state.data.socratic1 ||
+      !state.data.alternatives ||
+      !state.data.antiBiasTechnique ||
+      !state.data.antiBiasOutput
+    )
+      return;
+    const payload = {
+      description: state.data.description,
+      socratic: toSocraticPayload(state.data.socratic1, state.data.socratic2),
+      alternatives: alternativesForPayload(state.data.alternatives),
+      technique: state.data.antiBiasTechnique,
+      antiBiasMarkdown: state.data.antiBiasOutput,
+    };
+    dispatch({ type: "REQUEST_START" });
+    submit(payload);
+  }
+
+  async function copy() {
+    if (!stored || !storedSummary || !state.data.antiBiasTechnique) return;
+    const md = artifactToMarkdown({
+      description: state.data.description,
+      summary: storedSummary,
+      artifact: stored,
+      anti_bias_technique: state.data.antiBiasTechnique,
+    });
+    try {
+      await navigator.clipboard.writeText(md);
+      setCopied(true);
+      setTimeout(() => {
+        setCopied(false);
+      }, 1500);
+    } catch (err) {
+      console.error("[artifact] copy failed", err);
+    }
+  }
+
+  function download() {
+    if (!stored || !storedSummary || !state.data.antiBiasTechnique) return;
+    const input: NewDecisionInput = {
+      description: state.data.description,
+      summary: storedSummary,
+      artifact: stored,
+      anti_bias_technique: state.data.antiBiasTechnique,
+    };
+    const md = artifactToMarkdown(input);
+    const filename = artifactToFilename(input);
+    const blob = new Blob([md], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  const streamErrorVisible = !!error && !state.error;
+
+  return (
+    <section className="space-y-5">
+      <p className="text-sm text-blue-100/70">
+        Your structured decision. Auto-saves when the stream completes. Copy or download as Markdown.
+      </p>
+
+      {showSkeleton ? <ArtifactSkeleton /> : null}
+
+      {!showSkeleton ? (
+        <article className="space-y-5 rounded-xl border border-white/10 bg-white/5 p-5">
+          <header className="space-y-1">
+            <h1 className="text-xl leading-snug font-semibold text-white">
+              Decision: {state.data.description.split("\n")[0]?.trim() || "Untitled"}
+            </h1>
+            {displaySummary ? <p className="text-sm text-white/70 italic">{displaySummary}</p> : null}
+          </header>
+          <ArtifactSection heading="Needs" items={displayArtifact.needs} />
+          <ArtifactSection heading="Criteria" items={displayArtifact.criteria} />
+          <ArtifactSection heading="Options" items={displayArtifact.options} />
+          <ArtifactSection heading="Risks" items={displayArtifact.risks} />
+          <ArtifactSection heading="Open questions" items={displayArtifact.open_questions} />
+        </article>
+      ) : null}
+
+      <ErrorBanner error={state.error} onRetry={retryStream} />
+      {streamErrorVisible ? (
+        <ErrorBanner error={{ kind: "llm", message: error.message }} onRetry={retryStream} />
+      ) : null}
+
+      {stored ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/5 p-3">
+          <div className="flex items-center gap-2 text-sm">
+            {saveStatus === "saved" ? (
+              <span className="flex items-center gap-1 text-emerald-300">
+                <Check className="size-4" /> Saved
+              </span>
+            ) : saveStatus === "saving" ? (
+              <span className="text-white/70">Saving…</span>
+            ) : saveStatus === "failed" ? (
+              <span className="text-rose-300">Save failed</span>
+            ) : (
+              <span className="text-white/60">Idle</span>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              onClick={() => {
+                void copy();
+              }}
+              className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white hover:bg-white/20"
+            >
+              {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
+              {copied ? "Copied" : "Copy"}
+            </Button>
+            <Button
+              type="button"
+              onClick={download}
+              className="flex items-center gap-2 rounded-lg bg-white/10 px-3 py-2 text-sm font-medium text-white hover:bg-white/20"
+            >
+              <Download className="size-4" />
+              Download
+            </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {saveStatus === "failed" ? (
+        <ErrorBanner error={{ kind: "network", message: saveError ?? "Save failed — try again" }} onRetry={retrySave} />
+      ) : null}
+
+      {isLoading ? (
+        <button type="button" onClick={stop} className="text-xs text-white/60 underline hover:text-white">
+          Stop
+        </button>
+      ) : null}
+    </section>
+  );
+}

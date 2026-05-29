@@ -773,19 +773,19 @@ None. No schema changes — F-01 already covers the data layer. Env adds one sec
 
 #### Automated
 
-- [x] 4.1 Alternatives endpoint: 200/400/401/500 paths covered
-- [x] 4.2 Anti-bias endpoint: 200/400/401/500 paths covered; out-of-enum technique → 400
-- [x] 4.3 Reducer unit test: `GO_TO "artifact"` no-op when `acknowledgedAt === undefined`
-- [x] 4.4 Reducer unit test: `ACKNOWLEDGE_ANTI_BIAS` stamps `data.acknowledgedAt`
-- [x] 4.5 `npm run lint` + `npm run build` pass
+- [x] 4.1 Alternatives endpoint: 200/400/401/500 paths covered — 4e2df06
+- [x] 4.2 Anti-bias endpoint: 200/400/401/500 paths covered; out-of-enum technique → 400 — 4e2df06
+- [x] 4.3 Reducer unit test: `GO_TO "artifact"` no-op when `acknowledgedAt === undefined` — 4e2df06
+- [x] 4.4 Reducer unit test: `ACKNOWLEDGE_ANTI_BIAS` stamps `data.acknowledgedAt` — 4e2df06
+- [x] 4.5 `npm run lint` + `npm run build` pass — 4e2df06
 
 #### Manual
 
-- [x] 4.6 Step 3 streams 3 alternative cards; skeleton visible immediately
-- [x] 4.7 Step 4 picker renders 3 cards; picking one streams markdown into the prose block
-- [x] 4.8 Each technique produces visibly distinct output (sample one decision through all three)
-- [x] 4.9 Continue stays disabled until Acknowledge clicked
-- [x] 4.10 After Acknowledge, Continue advances to step 5
+- [x] 4.6 Step 3 streams 3 alternative cards; skeleton visible immediately — 4e2df06
+- [x] 4.7 Step 4 picker renders 3 cards; picking one streams markdown into the prose block — 4e2df06
+- [x] 4.8 Each technique produces visibly distinct output (sample one decision through all three) — 4e2df06
+- [x] 4.9 Continue stays disabled until Acknowledge clicked — 4e2df06
+- [x] 4.10 After Acknowledge, Continue advances to step 5 — 4e2df06
 - [ ] 4.11 Bypass attempt: devtools `GO_TO "artifact"` dispatch → state.step does not change
 - [ ] 4.12 Mid-stream failure on either endpoint → Retry path works; prior step data preserved
 
@@ -793,21 +793,21 @@ None. No schema changes — F-01 already covers the data layer. Env adds one sec
 
 #### Automated
 
-- [ ] 5.1 `/api/wizard/artifact`: 200 streaming body for valid request; 400 invalid body; 401 no session; 500 on `schema_invalid` after `generateObject` healing fallback fails
-- [ ] 5.2 `/api/decisions` save: 201 `{ id }` for valid payload; 400 invalid body; 401 no session; 500 on INSERT failure
-- [ ] 5.3 `artifactToMarkdown` snapshot test
-- [ ] 5.4 `artifactToFilename` test
-- [ ] 5.5 `npm run lint` + `npm run build` pass
+- [x] 5.1 `/api/wizard/artifact`: 200 streaming body for valid request; 400 invalid body; 401 no session; 500 on `schema_invalid` after `generateObject` healing fallback fails
+- [x] 5.2 `/api/decisions` save: 201 `{ id }` for valid payload; 400 invalid body; 401 no session; 500 on INSERT failure
+- [x] 5.3 `artifactToMarkdown` snapshot test
+- [x] 5.4 `artifactToFilename` test
+- [x] 5.5 `npm run lint` + `npm run build` pass
 
 #### Manual
 
-- [ ] 5.6 Step 5 streams the artifact section-by-section behind the skeleton
-- [ ] 5.7 "Saved" indicator with Copy + Download appears on stream completion
-- [ ] 5.8 Copy puts well-formed markdown in clipboard (paste-test into a markdown renderer)
-- [ ] 5.9 Download produces `<slug>.md` matching the canonical template
-- [ ] 5.10 Forced save failure → banner appears; Retry-save POST to `/api/decisions` succeeds without re-streaming
-- [ ] 5.11 Saved row visible in Supabase Studio scoped to signed-in `user_id`, with `anti_bias_technique` + `acknowledged_at`
-- [ ] 5.12 Second wizard run inserts a second row; rows scoped to the same user only
+- [x] 5.6 Step 5 streams the artifact section-by-section behind the skeleton
+- [x] 5.7 "Saved" indicator with Copy + Download appears on stream completion
+- [x] 5.8 Copy puts well-formed markdown in clipboard (paste-test into a markdown renderer)
+- [x] 5.9 Download produces `<slug>.md` matching the canonical template
+- [x] 5.10 Forced save failure → banner appears; Retry-save POST to `/api/decisions` succeeds without re-streaming
+- [x] 5.11 Saved row visible in Supabase Studio scoped to signed-in `user_id`, with `anti_bias_technique` + `acknowledged_at`
+- [x] 5.12 Second wizard run inserts a second row; rows scoped to the same user only
 
 ### Phase 6: Polish + prompt tuning + p95 + manual smoke
 
