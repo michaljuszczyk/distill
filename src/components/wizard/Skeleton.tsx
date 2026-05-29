@@ -56,3 +56,41 @@ export function SocraticSkeleton({ approxN = 4 }: SocraticSkeletonProps) {
     </div>
   );
 }
+
+export function AlternativesSkeleton() {
+  return (
+    <div className="grid gap-4 sm:grid-cols-3">
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="space-y-3 rounded-xl border border-white/10 bg-white/5 p-4">
+          <SkeletonRow width="60%" />
+          <div className="space-y-2">
+            <SkeletonRow width="40%" className="h-3" />
+            <SkeletonRow width="90%" className="h-3" />
+            <SkeletonRow width="80%" className="h-3" />
+          </div>
+          <div className="space-y-2">
+            <SkeletonRow width="40%" className="h-3" />
+            <SkeletonRow width="85%" className="h-3" />
+            <SkeletonRow width="75%" className="h-3" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function AntiBiasSkeleton() {
+  return (
+    <div className="space-y-4 rounded-xl border border-white/10 bg-white/5 p-5">
+      <SkeletonRow width="50%" className="h-5" />
+      <SkeletonRow width="90%" />
+      {Array.from({ length: 3 }).map((_, i) => (
+        <div key={i} className="space-y-2 pt-2">
+          <SkeletonRow width="35%" className="h-4" />
+          <SkeletonRow width="95%" />
+          <SkeletonRow width="85%" />
+        </div>
+      ))}
+    </div>
+  );
+}

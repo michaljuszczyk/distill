@@ -12,6 +12,9 @@ export default defineConfig({
   integrations: [react(), sitemap()],
   vite: {
     plugins: [tailwindcss()],
+    resolve: {
+      dedupe: ["react", "react-dom"],
+    },
     ssr: {
       noExternal: ["ai", "@ai-sdk/react", "@openrouter/ai-sdk-provider", "react-markdown"],
     },
