@@ -14,13 +14,18 @@ interface DecisionRow {
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 let decisions: DecisionRow[] = [];
+let loadError = false;
 if (supabase) {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("decisions")
     .select("id, description, summary, created_at")
     .order("created_at", { ascending: false })
     .overrideTypes<DecisionRow[], { merge: false }>();
-  decisions = data ?? [];
+  if (error) {
+    loadError = true;
+  } else {
+    decisions = data;
+  }
 }
 
 const dateFmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "short", day: "numeric" });
@@ -55,7 +60,12 @@ const dateFmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "short",
       </header>
 
       {
-        decisions.length === 0 ? (
+        loadError ? (
+          <div class="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-10 text-center backdrop-blur-xl">
+            <p class="text-lg font-medium text-white/90">Couldn't load your decisions</p>
+            <p class="mt-1 text-sm text-blue-100/60">Something went wrong on our end. Please refresh to try again.</p>
+          </div>
+        ) : decisions.length === 0 ? (
           <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center backdrop-blur-xl">
             <p class="text-lg font-medium text-white/90">No decisions yet</p>
             <p class="mt-1 text-sm text-blue-100/60">Walk a decision through the wizard and it'll be saved here.</p>

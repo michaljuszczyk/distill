@@ -6,6 +6,7 @@ import { ArtifactSkeleton } from "../Skeleton";
 import { useWizard } from "../context";
 import { ArtifactView } from "@/components/artifact/ArtifactView";
 import { ExportActions } from "@/components/artifact/ExportActions";
+import { firstNonEmptyLine } from "@/lib/wizard/exporter";
 import {
   ArtifactResponseSchema,
   type ArtifactResponse,
@@ -193,7 +194,7 @@ export function ArtifactStep() {
 
       {!showSkeleton ? (
         <ArtifactView
-          title={state.data.description.split("\n")[0]?.trim() || "Untitled"}
+          title={firstNonEmptyLine(state.data.description) || "Untitled"}
           summary={displaySummary}
           artifact={displayArtifact}
         />

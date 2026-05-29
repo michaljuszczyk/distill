@@ -2,27 +2,33 @@
 import Layout from "@/layouts/Layout.astro";
 import { createClient } from "@/lib/supabase";
 import { firstNonEmptyLine } from "@/lib/wizard/exporter";
-import { ArtifactView } from "@/components/artifact/ArtifactView";
-import { ExportActions } from "@/components/artifact/ExportActions";
+import { DecisionDetail } from "@/components/artifact/DecisionDetail";
 import type { Decision } from "@/types";
 
 const { id } = Astro.params;
 
 const supabase = createClient(Astro.request.headers, Astro.cookies);
 let decision: Decision | null = null;
+let loadError = false;
 if (supabase && id) {
-  const { data } = await supabase.from("decisions").select("*").eq("id", id).maybeSingle<Decision>();
-  decision = data ?? null;
+  const { data, error } = await supabase.from("decisions").select("*").eq("id", id).maybeSingle<Decision>();
+  if (error) {
+    loadError = true;
+  } else {
+    decision = data ?? null;
+  }
 }
 
-if (!decision) {
+if (loadError) {
+  Astro.response.status = 500;
+} else if (!decision) {
   Astro.response.status = 404;
 }
 
 const title = decision ? firstNonEmptyLine(decision.description) || "Untitled" : "";
 ---
 
-<Layout title={decision ? `Decision: ${title}` : "Not found"}>
+<Layout title={decision ? `Decision: ${title}` : loadError ? "Error" : "Not found"}>
   <div class="bg-cosmic min-h-screen p-4 text-white">
     <div class="mx-auto max-w-2xl space-y-5 py-8">
       <a
@@ -34,12 +40,12 @@ const title = decision ? firstNonEmptyLine(decision.description) || "Untitled" :
 
       {
         decision ? (
-          <>
-            <ArtifactView title={title} summary={decision.summary} artifact={decision.artifact} client:only="react" />
-            <div class="flex justify-end rounded-lg border border-white/10 bg-white/5 p-3">
-              <ExportActions input={decision} client:only="react" />
-            </div>
-          </>
+          <DecisionDetail title={title} decision={decision} client:only="react" />
+        ) : loadError ? (
+          <div class="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-10 text-center backdrop-blur-xl">
+            <p class="text-lg font-medium text-white/90">Couldn't load this decision</p>
+            <p class="mt-1 text-sm text-blue-100/60">Something went wrong on our end. Please try again.</p>
+          </div>
         ) : (
           <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center backdrop-blur-xl">
             <p class="text-lg font-medium text-white/90">Decision not found</p>

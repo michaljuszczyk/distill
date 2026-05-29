@@ -250,3 +250,9 @@ None. No schema changes — this slice is read-only over the existing `decisions
 - [x] 3.6 Bogus /decisions/<random-uuid> returns 404 — 5bcabb7
 - [x] 3.7 Cross-user decision id returns 404 (no data leak) — 5bcabb7
 - [x] 3.8 Unauthenticated /decisions/[id] redirects to /auth/signin — 5bcabb7
+
+## Addendum (2026-05-29, impl-review)
+
+- **`ArtifactView` is NOT rendered static/SSR as Phase 3's contract states.** Server-rendering React throws `jsxDEV is not a function` in dev (Astro 6 + React 19 / Vite jsx-dev-runtime mismatch). The read view is mounted via a single `client:only="react"` root (`src/components/artifact/DecisionDetail.tsx`) wrapping `ArtifactView` + `ExportActions`, matching the `WizardApp` pattern. This forgoes the planned zero-JS / instant-first-paint benefit. Root-cause fix is parked in `context/foundation/roadmap.md` (`main_goal: speed`); see `context/foundation/lessons.md` → "Default to client:only=react for React in .astro pages". `auth/signin.astro` and `auth/signup.astro` were also moved `client:load` → `client:only` for the same reason.
+- **Query-error handling added** beyond the original plan: `dashboard.astro` and `decisions/[id].astro` now surface a distinct error state on Supabase query failure instead of collapsing it into the empty state / a 404.
+- Full review + triage decisions: `reviews/impl-review.md`.
