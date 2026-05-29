@@ -138,6 +138,7 @@ _PRD `## Open Questions` was empty at draft time, and the lean interview surface
 - **PDF / JSON export formats** — Why parked: shape-notes Forward (FR-029 .md-only at MVP).
 - **OAuth (GitHub / Google) sign-in** — Why parked: shape-notes Forward (magic-link is the fastest path to working auth in MVP).
 - **Observability layer (logging / error tracking / metrics)** — Why parked: `main_goal=speed`; no NFR gates launch on this; baseline absent and we keep it absent. Privacy NFR is satisfied by adding nothing.
+- **SSR root-cause fix for React in `.astro` pages (drop `client:only`)** — Why parked: the `jsxDEV is not a function` (and related "Invalid hook call" / duplicate-React) dev-SSR errors (Astro 6 + React 19 / Vite `deps_ssr` jsx-dev-runtime + React-instance mismatch) have a working workaround — render React as `client:only="react"` (the wizard and the `decisions-list-view` detail view both do). A root-cause fix would let pages server-render React (static HTML, better first paint) but adds no user-visible MVP capability; deferred under `main_goal: speed`. See `context/foundation/lessons.md` → "Default to client:only=… for React in .astro pages".
 
 ## Done
 
