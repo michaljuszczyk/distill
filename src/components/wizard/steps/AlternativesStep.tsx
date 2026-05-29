@@ -53,6 +53,7 @@ export function AlternativesStep() {
 
   function retry() {
     if (!state.data.socratic1) return;
+    stop();
     const payload = toSocraticPayload(state.data.socratic1, state.data.socratic2);
     dispatch({ type: "REQUEST_START" });
     submit({ description, socratic: payload });

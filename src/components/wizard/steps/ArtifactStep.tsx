@@ -187,6 +187,7 @@ export function ArtifactStep() {
       !state.data.antiBiasOutput
     )
       return;
+    stop();
     const payload = {
       description: state.data.description,
       socratic: toSocraticPayload(state.data.socratic1, state.data.socratic2),

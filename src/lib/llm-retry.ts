@@ -1,5 +1,7 @@
 const RETRY_DELAYS_MS = [500, 1500, 4000] as const;
-const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 524, 529]);
+// Transient codes worth retrying. 501/505 are deliberately excluded — they signal
+// a non-transient capability mismatch, not a recoverable upstream hiccup.
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504, 524, 529]);
 const NON_RETRYABLE_STATUS = new Set([400, 401, 402, 403, 404, 422]);
 
 export interface RetryError {

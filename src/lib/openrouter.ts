@@ -21,13 +21,11 @@ export function getOpenRouter(): OpenRouterProvider {
 
 interface ModelOpts {
   allowFallbacks?: boolean;
-  healing?: boolean;
 }
 
 export function getModel(opts: ModelOpts = {}): LanguageModel {
   const or = getOpenRouter();
   const settings: Parameters<OpenRouterProvider>[1] = {};
   if (opts.allowFallbacks) settings.provider = { allow_fallbacks: true };
-  if (opts.healing) settings.plugins = [{ id: "response-healing" }];
   return or(MODEL_ID, Object.keys(settings).length ? settings : undefined);
 }
