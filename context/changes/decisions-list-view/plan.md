@@ -239,14 +239,14 @@ None. No schema changes — this slice is read-only over the existing `decisions
 
 #### Automated
 
-- [x] 3.1 Type checking passes
-- [x] 3.2 Linting passes
-- [x] 3.3 Build succeeds
+- [x] 3.1 Type checking passes — 5bcabb7
+- [x] 3.2 Linting passes — 5bcabb7
+- [x] 3.3 Build succeeds — 5bcabb7
 
 #### Manual
 
-- [x] 3.4 Row click opens read-only 5-section artifact
-- [x] 3.5 Copy and download work on the detail page
-- [x] 3.6 Bogus /decisions/<random-uuid> returns 404
-- [x] 3.7 Cross-user decision id returns 404 (no data leak)
-- [x] 3.8 Unauthenticated /decisions/[id] redirects to /auth/signin
+- [x] 3.4 Row click opens read-only 5-section artifact — 5bcabb7
+- [x] 3.5 Copy and download work on the detail page — 5bcabb7
+- [x] 3.6 Bogus /decisions/<random-uuid> returns 404 — 5bcabb7
+- [x] 3.7 Cross-user decision id returns 404 (no data leak) — 5bcabb7
+- [x] 3.8 Unauthenticated /decisions/[id] redirects to /auth/signin — 5bcabb7
