@@ -1,0 +1,52 @@
+---
+import Layout from "@/layouts/Layout.astro";
+import { createClient } from "@/lib/supabase";
+import { firstNonEmptyLine } from "@/lib/wizard/exporter";
+import { ArtifactView } from "@/components/artifact/ArtifactView";
+import { ExportActions } from "@/components/artifact/ExportActions";
+import type { Decision } from "@/types";
+
+const { id } = Astro.params;
+
+const supabase = createClient(Astro.request.headers, Astro.cookies);
+let decision: Decision | null = null;
+if (supabase && id) {
+  const { data } = await supabase.from("decisions").select("*").eq("id", id).maybeSingle<Decision>();
+  decision = data ?? null;
+}
+
+if (!decision) {
+  Astro.response.status = 404;
+}
+
+const title = decision ? firstNonEmptyLine(decision.description) || "Untitled" : "";
+---
+
+<Layout title={decision ? `Decision: ${title}` : "Not found"}>
+  <div class="bg-cosmic min-h-screen p-4 text-white">
+    <div class="mx-auto max-w-2xl space-y-5 py-8">
+      <a
+        href="/dashboard"
+        class="inline-flex items-center gap-1 text-sm text-blue-100/70 transition-colors hover:text-white"
+      >
+        ← Back to decisions
+      </a>
+
+      {
+        decision ? (
+          <>
+            <ArtifactView title={title} summary={decision.summary} artifact={decision.artifact} client:only="react" />
+            <div class="flex justify-end rounded-lg border border-white/10 bg-white/5 p-3">
+              <ExportActions input={decision} client:only="react" />
+            </div>
+          </>
+        ) : (
+          <div class="rounded-2xl border border-white/10 bg-white/5 p-10 text-center backdrop-blur-xl">
+            <p class="text-lg font-medium text-white/90">Decision not found</p>
+            <p class="mt-1 text-sm text-blue-100/60">It may have been removed, or the link is incorrect.</p>
+          </div>
+        )
+      }
+    </div>
+  </div>
+</Layout>
