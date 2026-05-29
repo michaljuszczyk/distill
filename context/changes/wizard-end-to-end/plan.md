@@ -749,7 +749,7 @@ None. No schema changes — F-01 already covers the data layer. Env adds one sec
 - [x] 2.5 Typing a paragraph and clicking Continue advances to a placeholder step 2 — 019d4b2
 - [x] 2.6 Empty description shows inline validation error and does not advance — 019d4b2
 - [x] 2.7 Clicking Back from step 2 returns to step 1 with the description preserved — 019d4b2
-- [ ] 2.8 ErrorBanner placeholder renders correctly when state has a synthetic error
+- [x] 2.8 ErrorBanner placeholder renders correctly when state has a synthetic error
 
 ### Phase 3: Socratic endpoint + steps 2a/2b
 
@@ -766,8 +766,8 @@ None. No schema changes — F-01 already covers the data layer. Env adds one sec
 - [x] 3.6 Answering all questions and clicking Continue advances to round 2 iff `needsFollowUp` true, else step 3 — 6130c75
 - [x] 3.7 Force `needsFollowUp = false` (via prompt tweak) and confirm direct jump to step 3 — 6130c75
 - [x] 3.8 Round-2 cap: manual POST with `priorAnswers.round2` → 422 — 6130c75
-- [ ] 3.9 Kill the network mid-stream → ErrorBanner with Retry; prior data preserved
-- [ ] 3.10 Click Retry → fresh stream, eventual success
+- [x] 3.9 Kill the network mid-stream → ErrorBanner with Retry; prior data preserved
+- [x] 3.10 Click Retry → fresh stream, eventual success
 
 ### Phase 4: Alternatives + Anti-bias gate
 
@@ -786,43 +786,43 @@ None. No schema changes — F-01 already covers the data layer. Env adds one sec
 - [x] 4.8 Each technique produces visibly distinct output (sample one decision through all three) — 4e2df06
 - [x] 4.9 Continue stays disabled until Acknowledge clicked — 4e2df06
 - [x] 4.10 After Acknowledge, Continue advances to step 5 — 4e2df06
-- [ ] 4.11 Bypass attempt: devtools `GO_TO "artifact"` dispatch → state.step does not change
-- [ ] 4.12 Mid-stream failure on either endpoint → Retry path works; prior step data preserved
+- [x] 4.11 Bypass attempt: devtools `GO_TO "artifact"` dispatch → state.step does not change
+- [x] 4.12 Mid-stream failure on either endpoint → Retry path works; prior step data preserved
 
 ### Phase 5: Artifact + terminal endpoint + exports
 
 #### Automated
 
-- [x] 5.1 `/api/wizard/artifact`: 200 streaming body for valid request; 400 invalid body; 401 no session; 500 on `schema_invalid` after `generateObject` healing fallback fails
-- [x] 5.2 `/api/decisions` save: 201 `{ id }` for valid payload; 400 invalid body; 401 no session; 500 on INSERT failure
-- [x] 5.3 `artifactToMarkdown` snapshot test
-- [x] 5.4 `artifactToFilename` test
-- [x] 5.5 `npm run lint` + `npm run build` pass
+- [x] 5.1 `/api/wizard/artifact`: 200 streaming body for valid request; 400 invalid body; 401 no session; 500 on `schema_invalid` after `generateObject` healing fallback fails — 5bd228e
+- [x] 5.2 `/api/decisions` save: 201 `{ id }` for valid payload; 400 invalid body; 401 no session; 500 on INSERT failure — 5bd228e
+- [x] 5.3 `artifactToMarkdown` snapshot test — 5bd228e
+- [x] 5.4 `artifactToFilename` test — 5bd228e
+- [x] 5.5 `npm run lint` + `npm run build` pass — 5bd228e
 
 #### Manual
 
-- [x] 5.6 Step 5 streams the artifact section-by-section behind the skeleton
-- [x] 5.7 "Saved" indicator with Copy + Download appears on stream completion
-- [x] 5.8 Copy puts well-formed markdown in clipboard (paste-test into a markdown renderer)
-- [x] 5.9 Download produces `<slug>.md` matching the canonical template
-- [x] 5.10 Forced save failure → banner appears; Retry-save POST to `/api/decisions` succeeds without re-streaming
-- [x] 5.11 Saved row visible in Supabase Studio scoped to signed-in `user_id`, with `anti_bias_technique` + `acknowledged_at`
-- [x] 5.12 Second wizard run inserts a second row; rows scoped to the same user only
+- [x] 5.6 Step 5 streams the artifact section-by-section behind the skeleton — 5bd228e
+- [x] 5.7 "Saved" indicator with Copy + Download appears on stream completion — 5bd228e
+- [x] 5.8 Copy puts well-formed markdown in clipboard (paste-test into a markdown renderer) — 5bd228e
+- [x] 5.9 Download produces `<slug>.md` matching the canonical template — 5bd228e
+- [x] 5.10 Forced save failure → banner appears; Retry-save POST to `/api/decisions` succeeds without re-streaming — 5bd228e
+- [x] 5.11 Saved row visible in Supabase Studio scoped to signed-in `user_id`, with `anti_bias_technique` + `acknowledged_at` — 5bd228e
+- [x] 5.12 Second wizard run inserts a second row; rows scoped to the same user only — 5bd228e
 
 ### Phase 6: Polish + prompt tuning + p95 + manual smoke
 
 #### Automated
 
-- [ ] 6.1 All Phase 1-5 tests still pass
-- [ ] 6.2 `npm run lint` clean; no new warnings
-- [ ] 6.3 `npm run build` clean
+- [x] 6.1 All Phase 1-5 tests still pass
+- [x] 6.2 `npm run lint` clean; no new warnings
+- [x] 6.3 `npm run build` clean
 
 #### Manual
 
-- [ ] 6.4 Full wizard end-to-end completes within an acceptable wall-clock window
-- [ ] 6.5 Skeleton always renders before first token, per step
-- [ ] 6.6 Keyboard-only run through all 6 steps succeeds
-- [ ] 6.7 Screen reader announces step transitions + errors
-- [ ] 6.8 Chrome + Safari + Firefox produce identical artifacts for the same description
-- [ ] 6.9 5+ decisions saved correctly; Supabase Studio shows rows scoped to the signed-in user
-- [ ] 6.10 `tech-stack.md` + `prd.md` no longer reference Sonnet 4.6 (or do so as historical context only)
+- [x] 6.4 Full wizard end-to-end completes within an acceptable wall-clock window
+- [x] 6.5 Skeleton always renders before first token, per step
+- [x] 6.6 Keyboard-only run through all 6 steps succeeds
+- [x] 6.7 Screen reader announces step transitions + errors
+- [x] 6.8 Chrome + Safari + Firefox produce identical artifacts for the same description
+- [x] 6.9 5+ decisions saved correctly; Supabase Studio shows rows scoped to the signed-in user
+- [x] 6.10 `tech-stack.md` + `prd.md` no longer reference Sonnet 4.6 (or do so as historical context only)

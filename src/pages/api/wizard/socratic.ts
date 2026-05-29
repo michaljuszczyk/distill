@@ -43,6 +43,7 @@ export const POST: APIRoute = async (context) => {
         description: parsed.data.description,
         priorAnswers: parsed.data.priorAnswers,
       }),
+      maxOutputTokens: 800,
       onError({ error }) {
         console.error("[socratic] stream error", error);
       },

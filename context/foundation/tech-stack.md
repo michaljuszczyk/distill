@@ -32,3 +32,8 @@ background jobs / no long-running work. Deployment lands on cloudflare-pages,
 the starter's first default. Per PRD non-goal "manual deploy at MVP", no
 GitHub Actions pipeline is wired now; Cloudflare is the build/deploy surface
 and promotion is manual. Bootstrapper confidence is first-class.
+
+## LLM model selection
+
+The wizard ships on `deepseek/deepseek-v4-flash` via OpenRouter (`@openrouter/ai-sdk-provider` + Vercel `ai` SDK `streamObject`). Earlier shape-notes / idea drafts referenced Claude Sonnet 4.6 as the default; the implementer locked to DeepSeek v4-flash for cost-per-call and TTFB headroom against the NFR ">2s shows progress" budget on a 6-step wizard, with model id centralised in `src/lib/openrouter.ts:MODEL_ID` so swapping providers is a one-line change. The slug is verified against `GET https://openrouter.ai/api/v1/models`; if it 404s the implementer falls back to the nearest documented DeepSeek slug. Any future revisit (quality regressions, anti-bias output authenticity, p95 misses) goes through the same one-line swap.
+
