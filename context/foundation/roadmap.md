@@ -3,7 +3,7 @@ project: Distill
 version: 1
 status: draft
 created: 2026-05-28
-updated: 2026-05-28
+updated: 2026-05-29
 prd_version: 1
 main_goal: speed
 top_blocker: time
@@ -30,7 +30,7 @@ People making nontrivial decisions arrive mid-process with criteria blurred: par
 | ID    | Change ID              | Outcome (user can …)                                                                                  | Prerequisites    | PRD refs                                                                                  | Status   |
 | ----- | ---------------------- | ----------------------------------------------------------------------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------- | -------- |
 | F-01  | data-foundation        | (foundation) decisions schema + RLS + shared DTOs landed; per-user isolation enforced at data layer   | —                | FR-032                                                                                    | done     |
-| S-02  | wizard-end-to-end      | complete the 6-step wizard, see the structured artifact, copy/download it, and have it auto-saved    | F-01             | US-01, US-03, FR-020, FR-021, FR-022, FR-023, FR-024, FR-025, FR-026, FR-027, FR-028, FR-029, FR-030, FR-031 | proposed |
+| S-02  | wizard-end-to-end      | complete the 6-step wizard, see the structured artifact, copy/download it, and have it auto-saved    | F-01             | US-01, US-03, FR-020, FR-021, FR-022, FR-023, FR-024, FR-025, FR-026, FR-027, FR-028, FR-029, FR-030, FR-031 | done     |
 | S-03  | decisions-list-view    | see a list of saved decisions with one-line previews and open any to view the read-only artifact      | F-01             | US-04, FR-010, FR-011, FR-013                                                             | proposed |
 | S-01  | magic-link-auth        | sign in via magic link instead of the existing email+password (capability upgrade, not a gate)        | —                | US-02, FR-001, FR-002, FR-003                                                             | ready    |
 
@@ -83,7 +83,7 @@ What's already in place in the codebase as of `2026-05-28` (auto-researched + us
   - LLM call latency vs the NFR "continuous visible progress for steps > 2s" — confirm the chosen prompt sizes hit acceptable p50/p95 with OpenRouter/Sonnet 4.6 before final UX commit. Owner: implementer at `/10x-plan` time. Block: no.
   - In-memory wizard-state shape (FR-031) — what survives a mid-wizard LLM error vs what a browser refresh blows away — needs a one-page contract before implementation. Owner: implementer. Block: no.
 - **Risk:** Largest slice in the roadmap by surface area: 6 wizard steps × LLM wiring × state machine × anti-bias gate × auto-save × two export paths. Splitting it loses end-to-end validation, so it stays whole. The wedge (FR-030, US-03) lives inside this slice — the acknowledgment must be enforced at the UI layer **and** persisted with the saved decision (audit trail). If the slice slips, the north star slips with it. Auth comes from the existing email+password scaffold; do not block on magic-link (S-01).
-- **Status:** proposed
+- **Status:** done
 
 ### S-03: Decisions list view + artifact re-open
 
@@ -142,3 +142,4 @@ _PRD `## Open Questions` was empty at draft time, and the lean interview surface
 ## Done
 
 - **F-01: (foundation) `decisions` table landed in Supabase with RLS policies that scope reads/writes to the owning user; shared DTO types (decision, artifact section schema) exported from `src/types.ts`.** — Archived 2026-05-28 → `context/archive/2026-05-28-data-foundation/`. Lesson: —.
+- **S-02: signed-in user (existing email+password auth from baseline is sufficient) starts a new decision from the list, runs the 6 wizard steps (description → Socratic Qs with up to one follow-up round → 3 alternatives → user-picked anti-bias technique acknowledged → artifact rendered on screen → auto-saved), and can copy the artifact to clipboard or download it as `.md`. The anti-bias step is gated — the user cannot reach the final-artifact step without explicitly acknowledging the anti-bias output.** — Archived 2026-05-29 → `context/archive/2026-05-28-wizard-end-to-end/`. Lesson: —.
