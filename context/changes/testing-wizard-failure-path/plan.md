@@ -40,9 +40,9 @@ instance of the documented stream-race lesson.
 1. Proves (component) that a step keeps previously-typed answers rendered with the error
    banner visible after a `REQUEST_FAIL`, and (unit) that `REQUEST_FAIL` preserves
    `description` and a multi-field `data`.
-2. Proves (integration) that a provider failure on `artifact.ts` yields a JSON `500`
-   `{error:"llm_unavailable", code:"llm"}` (retryable 503) and the same with `status` echoed
-   (non-retryable 400) — never a 200 stream, never an artifact field in the body.
+2. Proves (component) that a provider stream failure surfaces a visible error on `ArtifactStep`
+   and commits/saves no fabricated artifact. (Re-scoped from the route during implementation —
+   the route returns 200-empty on streamed provider errors; see the Phase 2 re-scope note.)
 3. Proves (component) that a re-submit/re-pick on each of the four steps lands the reducer on
    the **fresh** request's data — a guard that currently **fails on SocraticStep** until its
    `stop()` is added.
@@ -85,9 +85,11 @@ fix and green with it; `npm run lint` and `astro sync && tsc`/build clean.
   no real fetch.
 - **No refactor of `llm-retry` / routes / steps** beyond the single one-line `stop()`
   addition to `SocraticStep.retry()`.
-- **Not testing Risk #2 at the client render layer** — Risk #2 stops at the api route per
-  decision; client error-banner behavior is exercised incidentally by the Risk #1/#7
-  component tests.
+- **No server-side hardening of the silent-200** — implementation found the artifact route
+  returns 200-empty on streamed provider errors (`streamObject` swallows them into `onError`);
+  surfacing those as a visible server error is a route behavior change deferred to its own
+  change (recorded in `lessons.md`). Phase 2 tests Risk #2 at the client, where the guarantee
+  actually lives.
 
 ## Implementation Approach
 
@@ -373,23 +375,23 @@ None — additive tests plus a one-line source fix. No schema, data, or API cont
 
 #### Automated
 
-- [x] 2.1 Client provider-failure tests pass (`npm run test`)
-- [x] 2.2 Existing route tests still pass (happy-200 + config-500 anchors)
-- [x] 2.3 Lint + type check pass
+- [x] 2.1 Client provider-failure tests pass (`npm run test`) — 240b42d
+- [x] 2.2 Existing route tests still pass (happy-200 + config-500 anchors) — 240b42d
+- [x] 2.3 Lint + type check pass — 240b42d
 
 #### Manual
 
-- [x] 2.4 Banner copy matches `npm run dev` (llm-kind on artifact failure)
+- [x] 2.4 Banner copy matches `npm run dev` (llm-kind on artifact failure) — 240b42d
 
 ### Phase 3: Risk #7 — Stream-race regression + live SocraticStep fix
 
 #### Automated
 
-- [ ] 3.1 Race test red on SocraticStep before fix, green after (`npm run test`)
-- [ ] 3.2 All four steps pass the race assertion after the fix
-- [ ] 3.3 Lint + type check pass
+- [x] 3.1 Race test red on SocraticStep before fix, green after (`npm run test`)
+- [x] 3.2 All four steps pass the race assertion after the fix
+- [x] 3.3 Lint + type check pass
 
 #### Manual
 
-- [ ] 3.4 `npm run dev`: SocraticStep retry shows no stale flash
-- [ ] 3.5 Other three steps regression-free
+- [x] 3.4 `npm run dev`: SocraticStep retry shows no stale flash
+- [x] 3.5 Other three steps regression-free

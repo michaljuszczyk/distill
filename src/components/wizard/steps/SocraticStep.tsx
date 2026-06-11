@@ -66,6 +66,7 @@ export function SocraticStep() {
   }, [stored, round, description, priorPayload, submit, dispatch]);
 
   function retry() {
+    stop();
     submittedFor.current = null;
     dispatch({ type: "REQUEST_START" });
     submit({ description, priorAnswers: priorPayload });
