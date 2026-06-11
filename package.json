@@ -7,11 +7,13 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
+    "prepare": "husky",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "test": "vitest run --passWithNoTests",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.193",
