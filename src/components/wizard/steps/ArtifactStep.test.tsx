@@ -77,7 +77,9 @@ describe("ArtifactStep — provider failure surfaces a visible error, no fabrica
     expect(dispatch).toHaveBeenCalledWith({ type: "REQUEST_START" });
 
     // Simulate the SDK finishing with an unparseable object (the empty/invalid stream
-    // a provider failure produces).
+    // a provider failure produces). Assert the step actually registered onFinish first,
+    // so this doesn't pass vacuously if a refactor drops the callback.
+    expect(hoisted.opts?.onFinish).toBeTypeOf("function");
     hoisted.opts?.onFinish?.({ object: { summary: 42 }, error: new Error("schema invalid") });
 
     const dispatched = dispatch.mock.calls.map(([a]) => (a as Action).type);

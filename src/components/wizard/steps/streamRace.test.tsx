@@ -79,6 +79,11 @@ interface Case {
   stale: unknown;
   freshValue: (s: WizardState) => unknown;
   expected: unknown;
+  // Override the default double-retry-click (e.g. AntiBias re-picks two *different*
+  // techniques so technique↔markdown pairing is observable).
+  trigger?: () => void;
+  // Extra post-race assertion beyond the fresh-value check (e.g. AntiBias pairing).
+  assertExtra?: (s: WizardState) => void;
 }
 
 const cases: Case[] = [
@@ -101,7 +106,7 @@ const cases: Case[] = [
     expected: "FRESH",
   },
   {
-    name: "AntiBiasStep.retry",
+    name: "AntiBiasStep.pick",
     node: <AntiBiasStep />,
     initial: seed("anti-bias", {
       description: "d",
@@ -114,6 +119,18 @@ const cases: Case[] = [
     stale: { markdown: "STALE" },
     freshValue: (s) => s.data.antiBiasOutput,
     expected: "FRESH",
+    // Re-pick two *different* techniques: pre_mortem opens the stale stream,
+    // unknown_unknowns aborts it and opens the fresh one. The stale stream's
+    // onFinish — if not suppressed — would dispatch ANTI_BIAS_LOADED pairing
+    // STALE markdown with the (now fresh) lastSubmittedTechnique → mismatch.
+    trigger: () => {
+      fireEvent.click(screen.getByRole("button", { name: /pre-mortem/i }));
+      fireEvent.click(screen.getByRole("button", { name: /unknown unknowns/i }));
+    },
+    // The surviving markdown must be paired with the fresh request's technique.
+    assertExtra: (s) => {
+      expect(s.data.antiBiasTechnique).toBe("unknown_unknowns");
+    },
   },
   {
     name: "ArtifactStep.retryStream",
@@ -148,15 +165,21 @@ describe("Risk #7 — re-submit aborts the prior stream so a stale onFinish cann
       render(<Harness initial={c.initial}>{c.node}</Harness>);
 
       // Two re-triggers: stream A (index 0), then the fresh stream B (index 1).
-      const retry = () => fireEvent.click(screen.getByRole("button", { name: /retry/i }));
-      retry();
-      retry();
+      const trigger =
+        c.trigger ??
+        (() => {
+          const retry = () => fireEvent.click(screen.getByRole("button", { name: /retry/i }));
+          retry();
+          retry();
+        });
+      trigger();
 
       // Fresh (B) resolves first, then the stale (A) resolves later — the race window.
       fireFinish(1, c.fresh);
       fireFinish(0, c.stale);
 
       expect(c.freshValue(latest.state)).toBe(c.expected);
+      c.assertExtra?.(latest.state);
     });
   }
 });
