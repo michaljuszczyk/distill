@@ -387,11 +387,11 @@ None — additive tests plus a one-line source fix. No schema, data, or API cont
 
 #### Automated
 
-- [x] 3.1 Race test red on SocraticStep before fix, green after (`npm run test`)
-- [x] 3.2 All four steps pass the race assertion after the fix
-- [x] 3.3 Lint + type check pass
+- [x] 3.1 Race test red on SocraticStep before fix, green after (`npm run test`) — cb1c297
+- [x] 3.2 All four steps pass the race assertion after the fix — cb1c297
+- [x] 3.3 Lint + type check pass — cb1c297
 
 #### Manual
 
-- [x] 3.4 `npm run dev`: SocraticStep retry shows no stale flash
-- [x] 3.5 Other three steps regression-free
+- [x] 3.4 `npm run dev`: SocraticStep retry shows no stale flash — cb1c297
+- [x] 3.5 Other three steps regression-free — cb1c297
