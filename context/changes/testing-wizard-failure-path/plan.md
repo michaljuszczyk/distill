@@ -168,50 +168,68 @@ the manual checks before Phase 2.
 
 ---
 
-## Phase 2: Risk #2 — Provider-failure integration
+## Phase 2: Risk #2 — Provider-failure handling (client layer)
+
+> **Re-scoped during implementation (user-approved).** The plan originally asserted a
+> provider failure → JSON `500` at the artifact route. Implementation + AI SDK v6 docs proved
+> this false: `streamObject` delivers stream errors to its `onError` callback (which the route
+> only logs) and **closes `textStream` cleanly**, so `streamWithRetry`'s first read gets
+> `{done:true}` and the route returns **HTTP 200 with an empty body**. The route's `catch`
+> (NonRetryableError → 500) + retry are unreachable for _streamed_ provider errors — they only
+> catch _pre-stream_ throws (the `getModel`/config case, already tested). The Risk #2 guarantee
+> ("visible error, no fabricated artifact") therefore lives on the **client**: an empty/invalid
+> stream makes `ArtifactStep`'s `onFinish` hit a schema error → `REQUEST_FAIL` → visible banner,
+> with no `ARTIFACT_LOADED`/save. We test it there. The silent-200 is captured as a lesson.
 
 ### Overview
 
-Prove the api route translates a provider failure into a visible JSON 500 with no fabricated
-artifact, establishing the module-mock failure pattern (test-plan §4 / §6.2).
+Prove the client surfaces a provider stream failure as a visible error and commits/saves no
+fabricated artifact. Keep the existing server-side config-error → 500 test as the route anchor.
 
 ### Changes Required:
 
-#### 1. Provider-failure cases on the artifact route
+#### 1. Client provider-failure tests on ArtifactStep
 
-**File**: `src/pages/api/wizard/artifact.test.ts` (extend)
+**File**: `src/components/wizard/steps/ArtifactStep.test.tsx` (new)
 
-**Intent**: Add the missing failure-path coverage to the existing exemplar route test:
-a retryable upstream error and a non-retryable one, asserting our error translation and the
-absence of any artifact in the body.
+**Intent**: Assert Risk #2 where the guarantee actually lives — on a provider stream failure
+the user sees a visible error and no fabricated artifact is presented, committed, or saved.
 
-**Contract**: In the existing `vi.mock("@/lib/openrouter")` block, add cases where
-`getModel().doStream` rejects. Case A (retryable): reject with an error carrying
-`statusCode: 503` → after retries, response is HTTP `500`, body `{error:"llm_unavailable", code:"llm"}`,
-**not** a 200 stream, body contains no artifact/summary field. Case B (non-retryable): reject
-with `statusCode: 400` → `NonRetryableError` path → HTTP `500`, `code:"llm"`, `status` echoed.
-Keep retries fast (the suite must not wait real backoff — neutralize `RETRY_DELAYS_MS` via a
-timer fake or by asserting on the already-fast non-retryable case; see Implementation note).
-Declare mocks before `const { POST } = await import("./artifact")`. Existing happy-200 and
-config-500 cases remain the anchors.
+**Contract**: Mock `@ai-sdk/react`'s `experimental_useObject` (per Phase 1 harness) with a
+`vi.hoisted` holder that (a) exposes a settable `error` to drive the hook's error state and
+(b) captures the registered `onFinish`/`onError`. Test A: hook `error` set + `state.error: null`
+→ assert the llm-kind `ErrorBanner` copy is visible and no "Saved" UI renders. Test B: seed
+full wizard data so the step submits on mount (asserting `REQUEST_START` dispatched), then fire
+the captured `onFinish({ object, error: <schemaError> })` → assert dispatched actions contain
+`REQUEST_FAIL`, never `ARTIFACT_LOADED`, never `SAVED`, and `globalThis.fetch` (the save call)
+was not invoked.
+
+#### 2. Server route anchor (unchanged)
+
+**File**: `src/pages/api/wizard/artifact.test.ts`
+
+**Intent**: No change — the existing happy-200 and config-error → 500 cases remain the route
+anchors. The route's only reachable error-translation path (getModel throwing
+`OpenRouterUnconfiguredError`) is already covered; no server failure-stream test is added
+because the route cannot produce one (see the re-scope note).
 
 ### Success Criteria:
 
 #### Automated Verification:
 
-- Both failure cases pass: `npm run test`
-- Suite runtime not inflated by real retry backoff (no multi-second hang): `npm run test`
-- Lint + type check pass: `npm run lint`, `npm run build`
+- Client provider-failure tests pass: `npm run test`
+- Existing route tests still pass (happy-200 + config-500 anchors): `npm run test`
+- Lint + type check pass: `npm run lint`, `npm run typecheck`
 
 #### Manual Verification:
 
-- Confirm the asserted error body matches what `ArtifactStep`'s banner consumes (`code:"llm"`
-  → `copyFor` in `ErrorBanner.tsx`) so the test reflects real client behavior.
+- Confirm the asserted banner copy (`"The AI service is having trouble. Try again?"`, llm-kind)
+  matches what a user sees when an artifact generation fails in `npm run dev`.
 
-**Implementation Note**: `withRetry` uses `RETRY_DELAYS_MS = [500,1500,4000]` with jitter
-(`llm-retry.ts:1`). For Case A, use `vi.useFakeTimers()` and advance, or prefer asserting the
-retryable→500 outcome without real sleeps; Case B (non-retryable) returns immediately and
-needs no timer handling. After automated verification, pause for human confirmation.
+**Implementation Note**: The silent-200 finding is recorded in `context/foundation/lessons.md`.
+A server-side hardening (surface streamed provider errors instead of 200-empty) is explicitly
+deferred — it is a route behavior change needing its own change/plan. After automated
+verification, pause for human confirmation.
 
 ---
 
@@ -341,27 +359,27 @@ None — additive tests plus a one-line source fix. No schema, data, or API cont
 
 #### Automated
 
-- [x] 1.1 New component test passes (`npm run test`)
-- [x] 1.2 Extended reducer test passes (`npm run test`)
-- [x] 1.3 Type check / sync passes (`npx astro sync && npx tsc --noEmit`)
-- [x] 1.4 Lint passes (`npm run lint`)
+- [x] 1.1 New component test passes (`npm run test`) — 19c1eba
+- [x] 1.2 Extended reducer test passes (`npm run test`) — 19c1eba
+- [x] 1.3 Type check / sync passes (`npx astro sync && npx tsc --noEmit`) — 19c1eba
+- [x] 1.4 Lint passes (`npm run lint`) — 19c1eba
 
 #### Manual
 
-- [x] 1.5 Survival test fails when assertion inverted (sanity)
-- [x] 1.6 Asserted banner copy matches `npm run dev`
+- [x] 1.5 Survival test fails when assertion inverted (sanity) — 19c1eba
+- [x] 1.6 Asserted banner copy matches `npm run dev` — 19c1eba
 
-### Phase 2: Risk #2 — Provider-failure integration
+### Phase 2: Risk #2 — Provider-failure handling (client layer)
 
 #### Automated
 
-- [ ] 2.1 Both failure cases pass (`npm run test`)
-- [ ] 2.2 Suite runtime not inflated by real retry backoff
-- [ ] 2.3 Lint + type check pass
+- [x] 2.1 Client provider-failure tests pass (`npm run test`)
+- [x] 2.2 Existing route tests still pass (happy-200 + config-500 anchors)
+- [x] 2.3 Lint + type check pass
 
 #### Manual
 
-- [ ] 2.4 Asserted error body matches what `ErrorBanner` consumes (`code:"llm"`)
+- [x] 2.4 Banner copy matches `npm run dev` (llm-kind on artifact failure)
 
 ### Phase 3: Risk #7 — Stream-race regression + live SocraticStep fix
 
