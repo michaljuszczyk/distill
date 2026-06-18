@@ -1,0 +1,119 @@
+name: "AI Code Reviewer"
+description: "Run packages/code-reviewer over a diff; post an advisory PR comment + pass/fail label. Never fails the job on verdict."
+
+inputs:
+  pr-title:
+    description: "PR title (fed to the model as context)"
+    required: true
+  pr-body:
+    description: "PR description (fed to the model as context)"
+    required: false
+    default: ""
+  diff:
+    description: "Unified git diff to review (already truncated by the caller)"
+    required: true
+  pr-number:
+    description: "PR number. Empty in dispatch / print-only mode."
+    required: false
+    default: ""
+  post-results:
+    description: "'true' to comment + label the PR; 'false' to print JSON to the log only."
+    required: false
+    default: "true"
+  openrouter-api-key:
+    description: "OpenRouter API key for the review agent"
+    required: true
+  github-token:
+    description: "Token for gh CLI (comment + labels)"
+    required: true
+
+outputs:
+  verdict:
+    description: "pass | fail | unknown"
+    value: ${{ steps.review.outputs.verdict }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Ensure ai-cr labels exist
+      if: inputs.post-results == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        gh label create "ai-cr:passed" --color "0e8a16" --description "AI review passed" --force
+        gh label create "ai-cr:failed" --color "d73a4a" --description "AI review failed" --force
+        gh label create "ai-cr:review" --color "fbca04" --description "Request an AI re-review" --force
+
+    - name: Run review agent
+      id: review
+      shell: bash
+      env:
+        OPENROUTER_API_KEY: ${{ inputs.openrouter-api-key }}
+        PR_TITLE: ${{ inputs.pr-title }}
+        PR_BODY: ${{ inputs.pr-body }}
+        DIFF: ${{ inputs.diff }}
+      run: |
+        set -o pipefail
+        # Compose the agent's stdin: PR context + the diff. review.ts reads
+        # all of stdin and treats it as the material to review.
+        REVIEW_INPUT=$(printf '## PR Title\n%s\n\n## PR Description\n%s\n\n## Diff\n%s\n' "$PR_TITLE" "$PR_BODY" "$DIFF")
+
+        set +e
+        OUT=$(printf '%s' "$REVIEW_INPUT" | npx tsx packages/code-reviewer/review.ts 2>agent.err)
+        CODE=$?
+        set -e
+
+        if [ "$CODE" -ne 0 ] || ! printf '%s' "$OUT" | jq -e . >/dev/null 2>&1; then
+          echo "::warning title=AI review could not run::agent exit=$CODE or non-JSON output"
+          echo "----- agent stderr -----"
+          cat agent.err 2>/dev/null || true
+          echo "verdict=unknown" >> "$GITHUB_OUTPUT"
+          : > review.summary
+          exit 0
+        fi
+
+        printf '%s' "$OUT" > review.json
+        VERDICT=$(jq -r '.verdict' review.json)
+        jq -r '.summary' review.json > review.summary
+        echo "verdict=$VERDICT" >> "$GITHUB_OUTPUT"
+        echo "Verdict: $VERDICT"
+        echo "----- agent JSON -----"
+        cat review.json
+
+    - name: Post comment and label
+      if: inputs.post-results == 'true' && inputs.pr-number != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        PR_NUMBER: ${{ inputs.pr-number }}
+        VERDICT: ${{ steps.review.outputs.verdict }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      run: |
+        MARKER="<!-- ai-cr:marker -->"
+        # Cutoff captured before posting so we only delete *prior* runs' comments.
+        NOW_ISO=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+        if [ "$VERDICT" = "unknown" ]; then
+          BODY=$(printf '## 🤖 AI Code Review\n\n⚠️ Review could not run (agent error or missing config). See the [run log](%s).\n\n%s\n' "$RUN_URL" "$MARKER")
+          gh pr comment "$PR_NUMBER" --body "$BODY"
+        else
+          SUMMARY=$(cat review.summary)
+          if [ "$VERDICT" = "pass" ]; then ICON="✅"; else ICON="❌"; fi
+          BODY=$(printf '## 🤖 AI Code Review — %s `%s`\n\n%s\n\n_[run log](%s)_\n\n%s\n' "$ICON" "$VERDICT" "$SUMMARY" "$RUN_URL" "$MARKER")
+          gh pr comment "$PR_NUMBER" --body "$BODY"
+          if [ "$VERDICT" = "pass" ]; then
+            gh pr edit "$PR_NUMBER" --add-label "ai-cr:passed" || true
+            gh pr edit "$PR_NUMBER" --remove-label "ai-cr:failed" || true
+          else
+            gh pr edit "$PR_NUMBER" --add-label "ai-cr:failed" || true
+            gh pr edit "$PR_NUMBER" --remove-label "ai-cr:passed" || true
+          fi
+        fi
+
+        # Post-new-then-delete-old: retire prior marked comments from earlier runs.
+        gh api --paginate "repos/{owner}/{repo}/issues/${PR_NUMBER}/comments" \
+          --jq ".[] | select(.body | contains(\"${MARKER}\")) | select(.created_at < \"${NOW_ISO}\") | .id" \
+          | while read -r CID; do
+              gh api --method DELETE "repos/{owner}/{repo}/issues/comments/${CID}" 2>/dev/null || true
+            done
