@@ -309,11 +309,11 @@ confirmation (requires the secret to be set and a test PR).
 
 #### Automated
 
-- [x] 1.1 Action file parses as valid YAML
-- [x] 1.2 tsx present in lockfile
-- [x] 1.3 Agent still runs locally through tsx (jq .verdict)
-- [x] 1.4 Lint and typecheck pass
-- [x] 1.5 ci.yml unchanged
+- [x] 1.1 Action file parses as valid YAML — 62753f5
+- [x] 1.2 tsx present in lockfile — 62753f5
+- [x] 1.3 Agent still runs locally through tsx (jq .verdict) — 62753f5
+- [x] 1.4 Lint and typecheck pass — 62753f5
+- [x] 1.5 ci.yml unchanged — 62753f5
 
 #### Manual
 
@@ -325,10 +325,10 @@ confirmation (requires the secret to be set and a test PR).
 
 #### Automated
 
-- [ ] 2.1 review.yml parses as valid YAML and is well-formed
-- [ ] 2.2 Action reference path resolves
-- [ ] 2.3 ci.yml still unchanged
-- [ ] 2.4 Lint, typecheck, and test pass
+- [x] 2.1 review.yml parses as valid YAML and is well-formed
+- [x] 2.2 Action reference path resolves
+- [x] 2.3 ci.yml still unchanged
+- [x] 2.4 Lint, typecheck, and test pass
 
 #### Manual
 

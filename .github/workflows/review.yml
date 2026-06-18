@@ -1,0 +1,102 @@
+name: AI Code Review
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+  workflow_dispatch:
+
+# Least privilege at the top; the job widens only what it needs.
+permissions: {}
+
+jobs:
+  ai-review:
+    # Run on: manual dispatch; OR a same-repo PR event that is either a
+    # non-label event (opened/synchronize/reopened) or a `labeled` event
+    # whose label is `ai-cr:review` (the on-demand retry). Fork PRs are
+    # skipped — they lack repo secrets and a write token.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event.pull_request.head.repo.full_name == github.repository &&
+        (github.event.action != 'labeled' || github.event.label.name == 'ai-cr:review')
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    concurrency:
+      group: ai-review-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history so `git diff origin/main...HEAD` resolves the merge-base.
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Compute review inputs
+        id: ctx
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          DISPATCH_REF: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git fetch origin main --depth=50
+
+          DIFF="$(git diff origin/main...HEAD)"
+
+          # Cap + truncate oversized diffs (bound tokens; stay transparent).
+          MAX=200000
+          if [ "${#DIFF}" -gt "$MAX" ]; then
+            DIFF="${DIFF:0:$MAX}"$'\n\n[diff truncated at '"$MAX"' bytes — review covers the leading portion only]'
+          fi
+
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            TITLE="manual dispatch: ${DISPATCH_REF}"
+            BODY=""
+          else
+            TITLE="$(gh pr view "$PR_NUMBER" --json title --jq .title)"
+            BODY="$(gh pr view "$PR_NUMBER" --json body --jq .body)"
+          fi
+
+          {
+            echo "title<<__GHA_EOF__"
+            echo "$TITLE"
+            echo "__GHA_EOF__"
+            echo "body<<__GHA_EOF__"
+            echo "$BODY"
+            echo "__GHA_EOF__"
+            echo "diff<<__GHA_EOF__"
+            echo "$DIFF"
+            echo "__GHA_EOF__"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: AI review
+        uses: ./.github/actions/ai-reviewer
+        with:
+          pr-title: ${{ steps.ctx.outputs.title }}
+          pr-body: ${{ steps.ctx.outputs.body }}
+          diff: ${{ steps.ctx.outputs.diff }}
+          pr-number: ${{ github.event.pull_request.number }}
+          post-results: ${{ github.event_name != 'workflow_dispatch' }}
+          openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Consume ai-cr:review label
+        # After a PR review runs, drop the retry label so it can be re-added
+        # to trigger again. The resulting `unlabeled` event isn't in our
+        # trigger set, so this never recurses.
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: gh pr edit "$PR_NUMBER" --remove-label "ai-cr:review" || true
