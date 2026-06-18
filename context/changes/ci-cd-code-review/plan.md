@@ -325,10 +325,10 @@ confirmation (requires the secret to be set and a test PR).
 
 #### Automated
 
-- [x] 2.1 review.yml parses as valid YAML and is well-formed
-- [x] 2.2 Action reference path resolves
-- [x] 2.3 ci.yml still unchanged
-- [x] 2.4 Lint, typecheck, and test pass
+- [x] 2.1 review.yml parses as valid YAML and is well-formed — fffc828
+- [x] 2.2 Action reference path resolves — fffc828
+- [x] 2.3 ci.yml still unchanged — fffc828
+- [x] 2.4 Lint, typecheck, and test pass — fffc828
 
 #### Manual
 
