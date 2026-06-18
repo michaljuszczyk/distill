@@ -317,9 +317,9 @@ confirmation (requires the secret to be set and a test PR).
 
 #### Manual
 
-- [ ] 1.6 action.yml inputs/outputs match what review.yml passes
-- [ ] 1.7 Label colors render red/green
-- [ ] 1.8 Comment body scannable + carries hidden marker
+- [x] 1.6 action.yml inputs/outputs match what review.yml passes
+- [x] 1.7 Label colors render red/green
+- [x] 1.8 Comment body scannable + carries hidden marker
 
 ### Phase 2: Workflow wiring (review.yml)
 
@@ -332,9 +332,9 @@ confirmation (requires the secret to be set and a test PR).
 
 #### Manual
 
-- [ ] 2.5 Planted-issue PR → ai-cr:failed + naming comment; checks green
-- [ ] 2.6 Clean PR → ai-cr:passed + comment; checks green
-- [ ] 2.7 Adding ai-cr:review re-runs review and removes the label
-- [ ] 2.8 Fork PR is skipped (no run, no error)
-- [ ] 2.9 workflow_dispatch prints JSON in log, no PR comment/labels
-- [ ] 2.10 Re-run on a PR replaces prior AI comment (single marked comment)
+- [ ] 2.5 Planted-issue PR → ai-cr:failed + naming comment; checks green (not exercised — PR #1 passed; fail-branch logic verified locally in Phase 1)
+- [x] 2.6 Clean PR → ai-cr:passed + comment; checks green (PR #1, run 27762901683)
+- [x] 2.7 Adding ai-cr:review re-runs review and removes the label (run 27762987020; label consumed)
+- [ ] 2.8 Fork PR is skipped (no run, no error) (not exercised — no fork available)
+- [x] 2.9 workflow_dispatch prints JSON in log, no PR comment/labels (run 27762986393; "Verdict: pass" in log, no side-effects)
+- [x] 2.10 Re-run on a PR replaces prior AI comment (single marked comment) (marked-comment count stayed 1)
