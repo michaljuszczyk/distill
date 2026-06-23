@@ -9,8 +9,8 @@ inputs:
     description: "PR description (fed to the model as context)"
     required: false
     default: ""
-  diff:
-    description: "Unified git diff to review (already truncated by the caller)"
+  diff-file:
+    description: "Path to a file holding the unified git diff (already truncated by the caller). Passed as a path, not inline, so large diffs don't overflow the arg/env limit."
     required: true
   pr-number:
     description: "PR number. Empty in dispatch / print-only mode."
@@ -52,15 +52,20 @@ runs:
         OPENROUTER_API_KEY: ${{ inputs.openrouter-api-key }}
         PR_TITLE: ${{ inputs.pr-title }}
         PR_BODY: ${{ inputs.pr-body }}
-        DIFF: ${{ inputs.diff }}
+        DIFF_FILE: ${{ inputs.diff-file }}
       run: |
         set -o pipefail
-        # Compose the agent's stdin: PR context + the diff. review.ts reads
-        # all of stdin and treats it as the material to review.
-        REVIEW_INPUT=$(printf '## PR Title\n%s\n\n## PR Description\n%s\n\n## Diff\n%s\n' "$PR_TITLE" "$PR_BODY" "$DIFF")
-
+        # Compose the agent's stdin: small PR context + the diff streamed from
+        # its file. review.ts reads all of stdin and treats it as the material
+        # to review. The diff never touches an env var or argv, so it can't
+        # overflow ARG_MAX no matter how large it is.
         set +e
-        OUT=$(printf '%s' "$REVIEW_INPUT" | npx tsx packages/code-reviewer/review.ts 2>agent.err)
+        OUT=$(
+          {
+            printf '## PR Title\n%s\n\n## PR Description\n%s\n\n## Diff\n' "$PR_TITLE" "$PR_BODY"
+            cat "$DIFF_FILE"
+          } | npx tsx packages/code-reviewer/review.ts 2>agent.err
+        )
         CODE=$?
         set -e
 
