@@ -52,12 +52,20 @@ jobs:
           set -euo pipefail
           git fetch origin main --depth=50
 
-          DIFF="$(git diff origin/main...HEAD)"
+          # Write the diff to a file rather than a step output / env value. A large
+          # diff carried in the environment block overflows the OS arg+env limit
+          # (ARG_MAX), so the next step's shell fails to start with
+          # "Argument list too long". A file path is small and safe to pass; the
+          # diff is streamed into the agent via stdin downstream.
+          DIFF_FILE="$RUNNER_TEMP/review-diff.txt"
+          git diff origin/main...HEAD > "$DIFF_FILE"
 
           # Cap + truncate oversized diffs (bound tokens; stay transparent).
           MAX=200000
-          if [ "${#DIFF}" -gt "$MAX" ]; then
-            DIFF="${DIFF:0:$MAX}"$'\n\n[diff truncated at '"$MAX"' bytes — review covers the leading portion only]'
+          if [ "$(wc -c < "$DIFF_FILE")" -gt "$MAX" ]; then
+            head -c "$MAX" "$DIFF_FILE" > "$DIFF_FILE.tmp"
+            printf '\n\n[diff truncated at %s bytes — review covers the leading portion only]\n' "$MAX" >> "$DIFF_FILE.tmp"
+            mv "$DIFF_FILE.tmp" "$DIFF_FILE"
           fi
 
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
@@ -75,9 +83,7 @@ jobs:
             echo "body<<__GHA_EOF__"
             echo "$BODY"
             echo "__GHA_EOF__"
-            echo "diff<<__GHA_EOF__"
-            echo "$DIFF"
-            echo "__GHA_EOF__"
+            echo "diff-file=$DIFF_FILE"
           } >> "$GITHUB_OUTPUT"
 
       - name: AI review
@@ -85,7 +91,7 @@ jobs:
         with:
           pr-title: ${{ steps.ctx.outputs.title }}
           pr-body: ${{ steps.ctx.outputs.body }}
-          diff: ${{ steps.ctx.outputs.diff }}
+          diff-file: ${{ steps.ctx.outputs.diff-file }}
           pr-number: ${{ github.event.pull_request.number }}
           post-results: ${{ github.event_name != 'workflow_dispatch' }}
           openrouter-api-key: ${{ secrets.OPENROUTER_API_KEY }}
