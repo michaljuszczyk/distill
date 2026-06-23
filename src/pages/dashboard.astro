@@ -7,6 +7,7 @@ const { user } = Astro.locals;
 
 interface DecisionRow {
   id: string;
+  title: string;
   description: string;
   summary: string;
   created_at: string;
@@ -18,7 +19,7 @@ let loadError = false;
 if (supabase) {
   const { data, error } = await supabase
     .from("decisions")
-    .select("id, description, summary, created_at")
+    .select("id, title, description, summary, created_at")
     .order("created_at", { ascending: false })
     .overrideTypes<DecisionRow[], { merge: false }>();
   if (error) {
@@ -85,7 +86,7 @@ const dateFmt = new Intl.DateTimeFormat("en", { year: "numeric", month: "short",
                   class="block space-y-1.5 rounded-xl border border-white/10 bg-white/5 p-4 transition-colors hover:bg-white/10"
                 >
                   <h2 class="leading-snug font-semibold text-white">
-                    {firstNonEmptyLine(d.description) || "Untitled"}
+                    {d.title.trim() || firstNonEmptyLine(d.description) || "Untitled"}
                   </h2>
                   {d.summary ? <p class="text-sm text-white/70">{d.summary}</p> : null}
                   <p class="text-xs text-white/40">{dateFmt.format(new Date(d.created_at))}</p>

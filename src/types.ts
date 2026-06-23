@@ -23,9 +23,23 @@ export type NewDecisionInput = z.infer<typeof NewDecisionInputSchema>;
 export type Decision = NewDecisionInput & {
   id: string;
   user_id: string;
+  title: string;
+  note: string;
   acknowledged_at: string;
   created_at: string;
 };
+
+// The only user-mutable fields on a saved decision. The AI artifact stays
+// immutable, so it is intentionally absent here.
+export const UpdateDecisionInputSchema = z
+  .object({
+    title: z.string().max(200).optional(),
+    note: z.string().max(2000).optional(),
+  })
+  .refine((d) => d.title !== undefined || d.note !== undefined, {
+    message: "provide at least one of title or note",
+  });
+export type UpdateDecisionInput = z.infer<typeof UpdateDecisionInputSchema>;
 
 // --- wizard ---
 
