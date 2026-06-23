@@ -8,9 +8,11 @@
 -- The AI artifact stays immutable — the PATCH handler whitelists only
 -- title/note, so UPDATE never touches artifact/summary/description/technique.
 
+-- Length bounds mirror the API's zod limits, as defense-in-depth: even a writer
+-- that bypassed the PATCH handler cannot store oversize values.
 alter table public.decisions
-  add column title text not null default '',
-  add column note text not null default '';
+  add column title text not null default '' check (char_length(title) <= 200),
+  add column note text not null default '' check (char_length(note) <= 2000);
 
 create policy decisions_update_own
   on public.decisions

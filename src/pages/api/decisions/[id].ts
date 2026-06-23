@@ -34,9 +34,11 @@ export const PATCH: APIRoute = async (context) => {
     return json({ error: "invalid_input", issues: parsed.error.issues }, 400);
   }
 
+  // Trim on write so a whitespace-only title persists as "" (and renders as
+  // "Untitled") instead of surviving as invisible spaces.
   const patch: { title?: string; note?: string } = {};
-  if (parsed.data.title !== undefined) patch.title = parsed.data.title;
-  if (parsed.data.note !== undefined) patch.note = parsed.data.note;
+  if (parsed.data.title !== undefined) patch.title = parsed.data.title.trim();
+  if (parsed.data.note !== undefined) patch.note = parsed.data.note.trim();
 
   const supabase = createClient(context.request.headers, context.cookies);
   if (!supabase) return json({ error: "supabase_unconfigured", code: "config" }, 500);
