@@ -1,0 +1,48 @@
+diff --git a/src/components/CommentList.tsx b/src/components/CommentList.tsx
+index 3a1f2bc..7c2e9f4 100644
+--- a/src/components/CommentList.tsx
++++ b/src/components/CommentList.tsx
+@@ -1,28 +1,32 @@
+-import React from "react";
++import { useEffect, useState } from "react";
+
+ type Comment = { id: string; body: string };
+
+-export class CommentList extends React.Component<{ userId?: string }, { comments: Comment[] }> {
+-  state = { comments: [] as Comment[] };
++export function CommentList({ userId = "anonymous" }: { userId?: string }) {
++  const [comments, setComments] = useState<Comment[]>([]);
+
+-  componentDidMount() {
+-    fetch(`/api/comments?user=${this.props.userId}`)
+-      .then((r) => r.json())
+-      .then((comments: Comment[]) => this.setState({ comments }));
+-  }
++  useEffect(() => {
++    const controller = new AbortController();
++    fetch(`/api/comments?user=${encodeURIComponent(userId)}`, { signal: controller.signal })
++      .then((r) => r.json())
++      .then((data: Comment[]) => setComments(data))
++      .catch((err: unknown) => {
++        if (err instanceof Error && err.name !== "AbortError") throw err;
++      });
++    return () => controller.abort();
++  }, [userId]);
+
+-  render() {
+-    return (
+-      <ul>
+-        {this.state.comments.map((c) => (
+-          <li key={c.id}>{c.body}</li>
+-        ))}
+-      </ul>
+-    );
+-  }
++  return (
++    <ul>
++      {comments.map((c) => (
++        <li key={c.id}>{c.body}</li>
++      ))}
++    </ul>
++  );
+ }

@@ -1,0 +1,87 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+description: Code-review agent — compare models on a flawed vs. clean React 16→19 migration
+
+# Only the diff FILENAME flows through templating (diffs contain JSX `{{ }}` that
+# would break Nunjucks). The provider reads the file and builds the real prompt.
+prompts:
+  - "{{diffFile}}"
+
+# Same provider file, one entry per model under test. Each calls the production
+# reviewDiff() with a different OpenRouter model id.
+providers:
+  - id: file://./eval/provider.ts
+    label: deepseek-v4-pro
+    config:
+      model: deepseek/deepseek-v4-pro
+  - id: file://./eval/provider.ts
+    label: glm-5.1
+    config:
+      model: z-ai/glm-5.1
+  - id: file://./eval/provider.ts
+    label: gpt-5.4
+    config:
+      model: openai/gpt-5.4
+
+# Applies to every test case: the structured schema must always hold.
+defaultTest:
+  assert:
+    - type: is-json
+
+tests:
+  # --- Negative case: a broken diff MUST be rejected, for the right reasons. ---
+  - description: Flawed React 16→19 migration — XSS, broken effect, dead defaultProps
+    vars:
+      diffFile: react-migration.diff
+    assert:
+      # Static gate: a diff this broken MUST fail review.
+      - type: javascript
+        value: JSON.parse(output).verdict === 'fail'
+      # The XSS flaw must drag the security score down.
+      - type: javascript
+        value: JSON.parse(output).security <= 4
+      # LLM-as-judge: did the review actually find all three planted flaws?
+      - type: llm-rubric
+        value: |
+          The review summary must correctly identify ALL THREE planted flaws in this
+          React 16→19 migration diff (by mechanism — exact wording not required):
+
+          1. XSS — comment `body` (user content) is rendered via
+             dangerouslySetInnerHTML without sanitization.
+          2. Broken effect — useEffect uses `userId` but has an empty `[]` dependency
+             array, so it won't refetch when `userId` changes (stale closure /
+             missing dependency). (Bonus, NOT required: it also lacks an
+             AbortController/cleanup — a minor nit, do not require it.)
+          3. Dead default — `defaultProps` is set on a FUNCTION component, which
+             React 19 ignores, so the "anonymous" userId fallback silently stops working.
+
+          Pass ONLY if all three substantive flaws (XSS, missing-dependency, dead
+          defaultProps) are named. The cleanup/AbortController is optional bonus.
+          Inventing a flaw that isn't there is a fail.
+        provider:
+          id: openrouter:anthropic/claude-opus-4.8
+
+  # --- Positive case: a correct diff MUST pass, with no invented blockers. ---
+  - description: Clean React 16→19 migration — must be approved
+    vars:
+      diffFile: clean-migration.diff
+    assert:
+      # A well-formed migration must not be rejected.
+      - type: javascript
+        value: JSON.parse(output).verdict === 'pass'
+      # No security issue here — the score should be high.
+      - type: javascript
+        value: JSON.parse(output).security >= 7
+      # LLM-as-judge: the review must NOT hallucinate blockers.
+      - type: llm-rubric
+        value: |
+          This is a CORRECT React 16→19 migration with no blocking flaws:
+          - useEffect has the right dependency array [userId] and an
+            AbortController cleanup (no stale closure, no setState-after-unmount).
+          - the userId default uses a default PARAMETER, not defaultProps.
+          - comment bodies are rendered as text — no dangerouslySetInnerHTML, no XSS.
+
+          Pass ONLY if the review does NOT claim a security hole, a missing effect
+          cleanup, a stale closure, or a broken default. Flagging minor style nits
+          is fine; inventing a blocking bug is a fail.
+        provider:
+          id: openrouter:anthropic/claude-opus-4.8

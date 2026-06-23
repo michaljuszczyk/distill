@@ -1,13 +1,36 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { Output, ToolLoopAgent, stepCountIs } from "ai";
-import { reviewSchema } from "./schema.ts";
+import { fileURLToPath } from "node:url";
+import { reviewSchema, type Review } from "./schema.ts";
 
-const MODEL_ID = "deepseek/deepseek-v4-flash";
+// Chosen via the promptfoo eval in ./eval — glm-5.1 was the only model to catch
+// all planted flaws (incl. the subtle React-19 defaultProps case) without
+// false-alarming on clean code; the deepseek/gpt Pro variants missed it.
+export const DEFAULT_MODEL_ID = "z-ai/glm-5.1";
 
-const SYSTEM = `You are a senior code reviewer. You receive a unified git diff and
+export const SYSTEM = `You are a senior code reviewer. You receive a unified git diff and
 return a structured review. Score each criterion 1-10 per its description, set a
 binding pass/fail verdict, and write a short markdown summary. Be specific and
 reference files/lines from the diff. Do not invent code that is not in the diff.`;
+
+// Core review. Pure of stdin/env so the eval harness can call it per-model.
+export async function reviewDiff(diff: string, opts: { apiKey: string; modelId?: string }): Promise<Review> {
+  const openrouter = createOpenRouter({ apiKey: opts.apiKey });
+
+  const agent = new ToolLoopAgent({
+    model: openrouter(opts.modelId ?? DEFAULT_MODEL_ID),
+    instructions: SYSTEM,
+    tools: {},
+    stopWhen: stepCountIs(2),
+    output: Output.object({ schema: reviewSchema }),
+  });
+
+  const result = await agent.generate({
+    prompt: `Review this git diff:\n\n${diff}`,
+  });
+
+  return result.output;
+}
 
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
@@ -28,24 +51,15 @@ async function main() {
     process.exit(1);
   }
 
-  const openrouter = createOpenRouter({ apiKey });
-
-  const agent = new ToolLoopAgent({
-    model: openrouter(MODEL_ID),
-    instructions: SYSTEM,
-    tools: {},
-    stopWhen: stepCountIs(2),
-    output: Output.object({ schema: reviewSchema }),
-  });
-
-  const result = await agent.generate({
-    prompt: `Review this git diff:\n\n${diff}`,
-  });
-
-  process.stdout.write(JSON.stringify(result.output, null, 2) + "\n");
+  const review = await reviewDiff(diff, { apiKey });
+  process.stdout.write(JSON.stringify(review, null, 2) + "\n");
 }
 
-main().catch((err: unknown) => {
-  console.error(err);
-  process.exit(1);
-});
+// Only run the CLI when executed directly — importing this module (e.g. from the
+// eval provider) must not consume stdin or exit the process.
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  main().catch((err: unknown) => {
+    console.error(err);
+    process.exit(1);
+  });
+}
