@@ -13,7 +13,9 @@
     "format": "prettier --write .",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json"
+    "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "eval": "npx -y promptfoo@latest eval -c packages/code-reviewer/promptfooconfig.yaml",
+    "eval:view": "npx -y promptfoo@latest view"
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.193",

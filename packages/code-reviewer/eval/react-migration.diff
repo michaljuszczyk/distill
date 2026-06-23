@@ -1,0 +1,46 @@
+diff --git a/src/components/CommentList.tsx b/src/components/CommentList.tsx
+index 3a1f2bc..9d4e7a1 100644
+--- a/src/components/CommentList.tsx
++++ b/src/components/CommentList.tsx
+@@ -1,28 +1,30 @@
+-import React from "react";
++import { useEffect, useState } from "react";
+
+ type Comment = { id: string; body: string };
+
+-export class CommentList extends React.Component<{ userId?: string }, { comments: Comment[] }> {
+-  state = { comments: [] as Comment[] };
++export function CommentList({ userId }: { userId?: string }) {
++  const [comments, setComments] = useState<Comment[]>([]);
+
+-  componentDidMount() {
+-    fetch(`/api/comments?user=${this.props.userId}`)
++  // Migrated from componentDidMount.
++  useEffect(() => {
++    fetch(`/api/comments?user=${userId}`)
+       .then((r) => r.json())
+-      .then((comments: Comment[]) => this.setState({ comments }));
+-  }
++      .then((data: Comment[]) => setComments(data));
++  }, []);
+
+-  render() {
+-    return (
+-      <ul>
+-        {this.state.comments.map((c) => (
+-          <li key={c.id}>{c.body}</li>
+-        ))}
+-      </ul>
+-    );
+-  }
++  return (
++    <ul>
++      {comments.map((c) => (
++        <li key={c.id} dangerouslySetInnerHTML={{ __html: c.body }} />
++      ))}
++    </ul>
++  );
+ }
+
++// Keep the default user when none is supplied.
+ CommentList.defaultProps = { userId: "anonymous" };
